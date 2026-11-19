@@ -136,9 +136,9 @@ def parse_action(source):
         else:
             raise ValueError(f"未知动作：{part}")
 
-    if len(dpad) > 2 or (len(dpad) == 2 and
-                          dpad not in ({"UP", "DOWN"}, {"LEFT", "RIGHT"})):
-        raise ValueError("方向键只能是一个方向或一个相邻斜向组合")
+    # 只允许：单方向、相邻斜向；禁止相反方向和三个以上方向。
+    if len(dpad) > 2:
+        raise ValueError("方向键最多只能同时按两个相邻方向")
 
     if dpad in ({"UP", "DOWN"}, {"LEFT", "RIGHT"}):
         raise ValueError("相反方向不能同时按下")
@@ -270,6 +270,24 @@ def run_tests():
     check(DPAD[frozenset({"UP", "RIGHT"})] == 6, "右上方向")
     check(DPAD[frozenset({"DOWN", "LEFT"})] == 7, "左下方向")
     check(DPAD[frozenset({"DOWN", "RIGHT"})] == 8, "右下方向")
+
+    # D-pad parser regression tests: four singles and four adjacent diagonals.
+    check(parse_action("UP")["dpad"] == {"UP"}, "解析上方向")
+    check(parse_action("DOWN")["dpad"] == {"DOWN"}, "解析下方向")
+    check(parse_action("LEFT")["dpad"] == {"LEFT"}, "解析左方向")
+    check(parse_action("RIGHT")["dpad"] == {"RIGHT"}, "解析右方向")
+    check(parse_action("UP+LEFT")["dpad"] == {"UP", "LEFT"}, "解析左上")
+    check(parse_action("UP+RIGHT")["dpad"] == {"UP", "RIGHT"}, "解析右上")
+    check(parse_action("DOWN+LEFT")["dpad"] == {"DOWN", "LEFT"}, "解析左下")
+    check(parse_action("DOWN+RIGHT")["dpad"] == {"DOWN", "RIGHT"}, "解析右下")
+
+    for invalid_dpad in ("UP+DOWN", "LEFT+RIGHT", "UP+DOWN+LEFT"):
+        try:
+            parse_action(invalid_dpad)
+        except ValueError:
+            check(True, f"拒绝非法方向组合 {invalid_dpad}")
+        else:
+            check(False, f"错误地接受非法方向组合 {invalid_dpad}")
 
     non_pc = make_frame(
         {"buttons": {"A"}, "dpad": set(), "axes": {}},

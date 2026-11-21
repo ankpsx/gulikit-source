@@ -20,14 +20,11 @@ test("200 ms produces 16 records; blank delay is neutral", () => {
 });
 
 test("PC and Switch ABXY layouts use different face-button masks", () => {
-  const config = { macroList: [{ delay: 13, buttons: [
-    { id: "A" }, { id: "B" }, { id: "X" }, { id: "Y" },
-  ], sticks: [] }] };
+  const config = { macroList: [{ delay: 13, buttons: [{ id: "A" }], sticks: [] }] };
   const pc = record(encodeAPG(config, { metadata, fileSize: 18 }).data);
   const sw = record(encodeAPG(config, { metadata, abxyLayout: "SWITCH", fileSize: 18 }).data);
-  assert.equal(pc[12], 0x0f);
-  assert.equal(sw[12], 0x0f);
-  assert.notEqual(pc[12], sw[12]); // all four buttons together are invariant
+  assert.equal(pc[12], 0x02);
+  assert.equal(sw[12], 0x01);
 });
 
 test("trigger and second-mask fields are encoded", () => {

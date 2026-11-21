@@ -5,7 +5,7 @@
 > 产品名称：GuliKit APG Editor  
 > 产品形态：离线网页编辑器 + Windows x64 Electron/NSIS 安装程序  
 > 核心用途：编辑 GuliKit 宏步骤，在官方 JSON 与 APG 二进制之间导入、编辑、导出  
-> 当前实现基线：Git commit \`7dd2f90f49e09cd2a6096361d08fc5ce5dfe86d6\`（代码基线；本知识文件后续可独立更新）
+> 当前实现基线：Git commit \`88a4c4a7f4d1dbffed8266a99d6950a63dabd1d8\`（代码基线；本知识文件后续可独立更新）
 
 ---
 

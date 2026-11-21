@@ -6,14 +6,14 @@
 "d-up-left d-up d-up-right . . x . . ."
 "d-left . d-right . y . . a ."
 "d-down-left d-down d-down-right . . b . . ."
-". select . . home . start . .";
+". . select . . . start home .";
 gap:7px;padding:18px 14px;max-width:720px;margin:8px auto 4px;
 border:1px solid #40516b;border-radius:34% 34% 22% 22% / 22% 22% 34% 34%;
 background:radial-gradient(ellipse at 50% 45%,#263750 0%,#1a2940 62%,#111d30 100%);
 box-shadow:inset 0 2px 18px #080f1b}
 .check{display:flex;align-items:center;justify-content:center;gap:4px;min-height:38px;background:#263750;border:1px solid #52647e;padding:6px 4px;border-radius:9px;color:var(--text);font-size:12px;font-weight:700;cursor:pointer;user-select:none}
 .check input{width:15px;height:15px;margin:0;accent-color:var(--accent)}
-.check.selected{background:#145b53;border-color:var(--accent);color:#d9fff7;box-shadow:0 0 0 1px #4de0c155}
+.key-a,.key-b,.key-x,.key-y,.key-l3,.key-r3{border-radius:50%;aspect-ratio:1;min-height:42px;padding:4px}.key-lb,.key-rb,.key-lt,.key-rt{border-radius:999px}.check.selected{background:#145b53;border-color:var(--accent);color:#d9fff7;box-shadow:0 0 0 1px #4de0c155}
 .key-lb{grid-area:lb}.key-rb{grid-area:rb}.key-lt{grid-area:lt}.key-rt{grid-area:rt}
 .key-d-up{grid-area:d-up}.key-d-down{grid-area:d-down}.key-d-left{grid-area:d-left}.key-d-right{grid-area:d-right}
 .key-d-up-left{grid-area:d-up-left}.key-d-up-right{grid-area:d-up-right}.key-d-down-left{grid-area:d-down-left}.key-d-down-right{grid-area:d-down-right}

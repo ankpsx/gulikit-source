@@ -57,7 +57,11 @@ test("browser editor imports, edits, exports JSON and encodes APG", async t => {
   assert.equal(await page.locator(".button-grid").count(), 1, "the editor must contain exactly one shared controller diagram");
   assert.equal(await page.locator(".step").first().locator(".button-grid").count(), 0, "controller diagram must not be repeated inside step cards");
   const first = page.locator(".step").nth(0);
-  await first.locator(".edit-step").click();
+  await page.locator(".step").nth(1).locator(".step-title").click();
+  assert.equal(await page.locator(".step").nth(1).getAttribute("aria-selected"), "false", "blank delay steps must not enter action edit mode");
+  await first.locator(".step-title").click();
+  assert.equal(await first.getAttribute("aria-selected"), "true", "clicking a step card title must automatically select it and enter edit mode");
+  assert.match(await page.locator("#activeStepTitle").textContent(), /1\\. 动作步骤/);
   assert.ok(await page.locator("#buttonGrid .key-d-up").evaluate(el => el.getBoundingClientRect().top < document.querySelector("#buttonGrid .key-d-down").getBoundingClientRect().top), "D-pad directions should follow controller positions");
   const pos = await page.locator("#buttonGrid").evaluate(el => Object.fromEntries(["x","a","b","y","l3","r3"].map(k => { const r=el.querySelector(".key-"+k).getBoundingClientRect(); return [k,{x:r.x+r.width/2,y:r.y+r.height/2}]; })));
   assert.ok(pos.x.y < pos.b.y && pos.y.x < pos.a.x, "ABXY must follow Switch Pro positions: X top, A right, B bottom, Y left");

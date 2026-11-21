@@ -11,17 +11,34 @@ const BUTTON_LABELS = Object.freeze({
   A: "A", B: "B", X: "X", Y: "Y",
   LB: "LB", RB: "RB", LT: "LT", RT: "RT",
   L3: "L3", R3: "R3", START: "START", SELECT: "SELECT", HOME: "HOME",
-  D_UP: "D-Up", D_DOWN: "D-Down", D_LEFT: "D-Left", D_RIGHT: "D-Right",
-  D_UP_LEFT: "D-Up-Left", D_UP_RIGHT: "D-Up-Right",
-  D_DOWN_LEFT: "D-Down-Left", D_DOWN_RIGHT: "D-Down-Right",
+  D_UP: "↑", D_DOWN: "↓", D_LEFT: "←", D_RIGHT: "→",
+  D_UP_LEFT: "↖", D_UP_RIGHT: "↗",
+  D_DOWN_LEFT: "↙", D_DOWN_RIGHT: "↘",
 });
 
 function hex(bytes) {
   return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
 }
 
+const DPAD_POSITIONS = Object.freeze({
+  D_UP: { row: 0, col: 2 },
+  D_DOWN: { row: 2, col: 2 },
+  D_LEFT: { row: 1, col: 0 },
+  D_RIGHT: { row: 1, col: 4 },
+  D_UP_LEFT: { row: 0, col: 0 },
+  D_UP_RIGHT: { row: 0, col: 4 },
+  D_DOWN_LEFT: { row: 2, col: 0 },
+  D_DOWN_RIGHT: { row: 2, col: 4 },
+});
+
 function descriptor(id) {
-  return { id, label: BUTTON_LABELS[id] ?? id, type: id === "LT" || id === "RT" ? "trigger" : "button" };
+  const result = {
+    id,
+    label: BUTTON_LABELS[id] ?? id,
+    type: id === "LT" || id === "RT" ? "trigger" : "button",
+  };
+  if (DPAD_POSITIONS[id]) result.position = { ...DPAD_POSITIONS[id] };
+  return result;
 }
 
 function inferStickEntries(axes) {

@@ -29,12 +29,12 @@ test("JSON export with its exact paired profile reproduces all 464 official APG 
 
   const activeLength = 464 * APG_RECORD_SIZE;
   assert.deepEqual(
-    encoded.data.subarray(0, activeLength),
+    Buffer.from(encoded.data.subarray(0, activeLength)),
     officialBytes.subarray(0, activeLength),
     "all encoded controller records must match the paired official APG sample byte-for-byte",
   );
   assert.deepEqual(
-    encoded.data.subarray(activeLength),
+    Buffer.from(encoded.data.subarray(activeLength)),
     officialBytes.subarray(activeLength),
     "the sample-specific FF tail must match byte-for-byte",
   );

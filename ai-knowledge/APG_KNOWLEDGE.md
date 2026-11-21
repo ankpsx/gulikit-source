@@ -447,3 +447,13 @@ The page and archive were rechecked beyond the serializer function:
 **Updated conclusion:** the inspected downloaded-source snapshot provides no second export route or in-page size-expansion step that explains the user's approximately 1 MiB download. The mismatch is now narrower: either the actual browser session used a different/different-revision asset than this archived snapshot, or there is another factor not represented in the inspected page/source files. These are hypotheses, not findings. The user's reported approximately 1 MiB download remains a confirmed observation and must not be re-labelled as 1,024 bytes.
 
 **Still unresolved:** no binary sample of the actual 1 MiB download has been inspected, so its exact byte count, header/footer, padding pattern, record count, and relationship to the 1,024-byte source-generated buffer are unknown. Do not claim that the 1,024-byte buffer is the full real-world APG file.
+
+
+### Section 12 follow-up — source history and live-page cross-check (2026-11-21)
+
+- GitHub path history for `js/script_17.js` currently returns only one commit (`b9a3b770f545f3be845a4e2d012541ed8ef277de`, 2026-11-19, “Add files via upload”). The repository therefore provides no earlier revision of this file to compare for a former 1-MiB serializer.
+- The official editor HTML page remains accessible and still describes the page as the controller learning-file editor, supporting KK3, TT, and Elves 2 APG-capable firmware. This confirms the public editor page context, but its rendered text does not expose the binary payload implementation.
+- A direct text-page retrieval of the live `macroEditor.js` URL was rejected by the web retrieval layer because the response is JavaScript content rather than HTML/text page content. This is a retrieval limitation, not evidence that the asset is unavailable or identical/different from the archived copy.
+- Consequently, the live JavaScript asset has not yet been independently compared byte-for-byte with `script_17.js`. Do not claim that the current live editor necessarily uses the archived serializer, even though the user confirms that the repository source was downloaded from the editor page.
+
+**Next discriminating evidence:** obtain the exact downloaded APG binary (or at least its exact byte count and a hex dump of the first and last 64 bytes) and compare it with a locally reproduced 1,024-byte output from the archived serializer; alternatively, obtain the live `macroEditor.js` response as raw JavaScript through a retrieval route that preserves its bytes. Without one of these, the 1-MiB discrepancy cannot be resolved from the repository history alone.

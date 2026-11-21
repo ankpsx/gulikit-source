@@ -968,3 +968,60 @@ The complete mapping of byte-13 bits `0x04`, `0x08`, and `0x10` to named control
 2. Determine the exact add/subtract direction for all eight stick branches and reconcile `value: 100` against observed exports.
 3. Test duplicate/conflicting stick directions to confirm last-write-wins behavior against generated files.
 4. Add source-derived tests for axis neutral 2048, magnitude rounding, direction sign, and conflicting entries.
+
+
+## 22. 2026-11-21 follow-up: decoded system-button names and complete cardinal stick directions
+
+The obfuscation string table was decoded by extracting the script's own `_0x435d` lookup, `_0x2c2b` string array, and rotation initializer, then invoking the exact decoder. This is a source-derived mapping, not an inference from sample bytes.
+
+### 22.1 Remaining second-mask button names resolved
+
+The serializer's switch labels now resolve to the actual button IDs:
+
+- `START` writes second button-mask byte (record offset 13) bit `0x04`.
+- `SELECT` writes second button-mask byte (record offset 13) bit `0x08`.
+- `HOME` writes second button-mask byte (record offset 13) bit `0x10`.
+
+Together with the previously established `L3 = 0x02` and `R3 = 0x01`, the currently identified second-mask mapping is:
+
+| Button ID | Record byte 13 mask |
+|---|---:|
+| R3 | 0x01 |
+| L3 | 0x02 |
+| START | 0x04 |
+| SELECT | 0x08 |
+| HOME | 0x10 |
+
+This resolves the three formerly unnamed mask bits.
+
+### 22.2 Cardinal stick direction formulas resolved
+
+The helper aliases were also resolved through the same decoder. The four axis accumulators initialize to 2048. For a selected stick descriptor, the magnitude remains:
+
+`m = Math.round(value * 100 / 2047)`
+
+The cardinal direction branches then assign:
+
+| Stick | Direction | Axis accumulator |
+|---|---|---|
+| L_STICK | UP | left Y = 2048 + m |
+| L_STICK | DOWN | left Y = 2048 - m |
+| L_STICK | LEFT | left X = 2048 - m |
+| L_STICK | RIGHT | left X = 2048 + m |
+| R_STICK | UP | right Y = 2048 + m |
+| R_STICK | DOWN | right Y = 2048 - m |
+| R_STICK | LEFT | right X = 2048 - m |
+| R_STICK | RIGHT | right X = 2048 + m |
+
+All four axes are written as big-endian 16-bit values at record offsets 0-7. Diagonal direction IDs are present in the UI data model, but the serializer's stick switch currently has only the four cardinal cases; diagonal stick descriptors therefore do not select a diagonal vector through this switch. This must be reflected in tests rather than assuming diagonal composition.
+
+### 22.3 Correction / precision note for Section 21
+
+Section 21's statement that each directional branch uses a base expression that constant-folds to 2048 is correct when the full signed arithmetic literal is evaluated, including trailing multiplication by `-1` in the L_STICK DOWN branch. The exact formulas above supersede the earlier abbreviated arithmetic discussion.
+
+### 22.4 Remaining implementation checks
+
+1. Confirm whether values outside the expected range are clamped or simply passed through the 16-bit typed-array write.
+2. Test zero, maximum, negative, fractional, and missing `value` inputs.
+3. Test diagonal stick descriptors and duplicate cardinal directions in a single step.
+4. Extend the validator to assert all five identified byte-13 button masks and all eight cardinal axis-direction formulas.

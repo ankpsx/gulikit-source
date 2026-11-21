@@ -42,6 +42,7 @@
 | APG 记录 | 记录宽度 | 每条记录为 18 bytes（0x12）。 | 源码已确认 |
 | APG 记录 | 每步记录数 | 当前 serializer 使用 Math.ceil(delay_ms * 79 / 1000) 计算每一步输出记录数；每步状态按该数量重复写入。 | 源码已确认；不代表硬件物理采样率 |
 | APG 记录 | 顺序 | 步骤按宏列表顺序编码。 | 源码已确认 |
+| APG 记录 | 延时反推 | 对 n 条连续记录，符合 ceil(delay_ms × 79 / 1000)=n 的正整数毫秒范围为 floor((n−1)×1000/79)+1 至 floor(n×1000/79)。例如 16 条对应 190–202 ms，不能唯一恢复 200 ms。 | 由源码公式数学推导；不是原始 delay 的恢复值 |
 | APG 字段 | Offset 0–1 | Left stick X，16-bit big-endian。 | 源码已确认 |
 | APG 字段 | Offset 2–3 | Left stick Y，16-bit big-endian。 | 源码已确认 |
 | APG 字段 | Offset 4–5 | Right stick X，16-bit big-endian。 | 源码已确认 |
@@ -84,6 +85,7 @@
 | 样本 | 尾部填充差异 | 当前审计源码尾部表达式折算为 5991，写入 Uint8Array 截断为 0x67；样本未使用区为 0xFF。 | 源码表达式已确认、样本值已观察；两者差异原因待验证 |
 | 本地实现 | Encoder | codec/apg-codec.mjs 已实现 18-byte record encoder、1 MiB 输出、79/s 记录数表达式、轴/trigger/button/D-pad、PC/Switch ABXY 和 blank delay。 | 实现已提交；https://github.com/ankpsx/gulikit-source/blob/main/codec/apg-codec.mjs |
 | 本地实现 | Decoder 第一层 | decodeAPGRecords() 要求显式传入 recordCount；解析 axes/triggers/masks/D-pad/marker/counter，保留每条原始记录、原始尾部和不足 18 bytes 的 fragment。 | 实现已提交；不是高层宏步骤 decoder |
+| 本地实现 | Decoder 状态分组 | decodeAPGSteps() 将相邻且前 15 bytes 控制状态完全相同的记录合并为候选 run；排除 marker/counter，保留原始记录。相同状态的相邻原始步骤无法区分。 | 实现已提交；仅推断状态 run，不声称精确恢复步骤边界 |
 | 本地实现 | ABXY 未指定 | 未指定布局时不猜测，返回 face-button 候选解释。 | 实现已提交 |
 | 本地实现 | Metadata 策略 | Encoder 要求调用者显式传入 marker/counter profile，避免把单一样本规律伪装成通用规则。 | 实现策略已提交 |
 | 本地测试 | 测试覆盖 | Node 测试覆盖 200 ms→16 records、blank neutral、ABXY、trigger/second mask、D-pad/摇杆基本方向、零延时、参数校验、raw record/tail 保留、ABXY 未指定和 metadata 解析。 | CI 已验证 9 pass / 0 fail |
@@ -105,7 +107,8 @@
 ## 4. 实施状态与下一步
 
 - **已完成第一版**：APG encoder、低级 18-byte record parser、Node 单元测试、GitHub Actions。
-- **正在推进**：记录边界识别、宏步骤分组与 delay 恢复、JSON normalize、APG → 可编辑动作模型。
+- **已完成初步状态分组**：decodeAPGSteps() 输出相邻同状态 run，并给出可成立的整数毫秒延时范围；相邻同状态步骤仍不可区分。
+- **正在推进**：记录终止范围识别、JSON normalize、APG → 可编辑动作模型。
 - **后续**：完整 JSON ↔ APG 语义往返；GUI 步骤编辑、拖动排序、延时编辑；离线 Windows EXE。
 - **验收原则**：必须用独立 APG 样本验证映射；完成 APG → 编辑 → APG 往返；未知字节/尾部不得丢失；所有尚未证明的元数据均应提示用户或保留原值。
 

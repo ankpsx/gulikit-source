@@ -1,0 +1,415 @@
+{
+  "fileName": "Official.29steps",
+  "version": "1.0",
+  "macroList": [
+    {
+      "id": "apg-step-1",
+      "buttons": [
+        {
+          "id": "LT",
+          "label": "LT",
+          "type": "trigger"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-2",
+      "buttons": [
+        {
+          "id": "RT",
+          "label": "RT",
+          "type": "trigger"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-3",
+      "buttons": [
+        {
+          "id": "LB",
+          "label": "LB",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-4",
+      "buttons": [
+        {
+          "id": "RB",
+          "label": "RB",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-5",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "L_STICK",
+            "label": "Left Stick",
+            "type": "stick"
+          },
+          "direction": "UP",
+          "value": 41902.09
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-6",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "L_STICK",
+            "label": "Left Stick",
+            "type": "stick"
+          },
+          "direction": "LEFT",
+          "value": 41902.09
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-7",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "L_STICK",
+            "label": "Left Stick",
+            "type": "stick"
+          },
+          "direction": "DOWN",
+          "value": 41902.09
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-8",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "L_STICK",
+            "label": "Left Stick",
+            "type": "stick"
+          },
+          "direction": "RIGHT",
+          "value": 41902.09
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-9",
+      "buttons": [
+        {
+          "id": "L3",
+          "label": "L3",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-10",
+      "buttons": [
+        {
+          "id": "SELECT",
+          "label": "SELECT",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-11",
+      "buttons": [
+        {
+          "id": "START",
+          "label": "START",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-12",
+      "buttons": [
+        {
+          "id": "HOME",
+          "label": "HOME",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-13",
+      "buttons": [
+        {
+          "id": "Y",
+          "label": "Y",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-14",
+      "buttons": [
+        {
+          "id": "X",
+          "label": "X",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-15",
+      "buttons": [
+        {
+          "id": "A",
+          "label": "A",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-16",
+      "buttons": [
+        {
+          "id": "B",
+          "label": "B",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-17",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "R_STICK",
+            "label": "Right Stick",
+            "type": "stick"
+          },
+          "direction": "RIGHT",
+          "value": 41902.09
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-18",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "R_STICK",
+            "label": "Right Stick",
+            "type": "stick"
+          },
+          "direction": "UP",
+          "value": 41902.09
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-19",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "R_STICK",
+            "label": "Right Stick",
+            "type": "stick"
+          },
+          "direction": "LEFT",
+          "value": 41902.09
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-20",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "R_STICK",
+            "label": "Right Stick",
+            "type": "stick"
+          },
+          "direction": "DOWN",
+          "value": 41902.09
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-21",
+      "buttons": [
+        {
+          "id": "R3",
+          "label": "R3",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-22",
+      "buttons": [
+        {
+          "id": "D_RIGHT",
+          "label": "D-Right",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-23",
+      "buttons": [
+        {
+          "id": "D_LEFT",
+          "label": "D-Left",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-24",
+      "buttons": [
+        {
+          "id": "D_DOWN",
+          "label": "D-Down",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-25",
+      "buttons": [
+        {
+          "id": "D_UP",
+          "label": "D-Up",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-26",
+      "buttons": [
+        {
+          "id": "D_UP_RIGHT",
+          "label": "D-Up-Right",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-27",
+      "buttons": [
+        {
+          "id": "D_DOWN_LEFT",
+          "label": "D-Down-Left",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-28",
+      "buttons": [
+        {
+          "id": "D_DOWN_RIGHT",
+          "label": "D-Down-Right",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-29",
+      "buttons": [
+        {
+          "id": "D_UP_LEFT",
+          "label": "D-Up-Left",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    }
+  ]
+}

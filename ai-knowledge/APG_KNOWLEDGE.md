@@ -1025,3 +1025,18 @@ Section 21's statement that each directional branch uses a base expression that 
 2. Test zero, maximum, negative, fractional, and missing `value` inputs.
 3. Test diagonal stick descriptors and duplicate cardinal directions in a single step.
 4. Extend the validator to assert all five identified byte-13 button masks and all eight cardinal axis-direction formulas.
+
+
+## 23. 2026-11-21 follow-up: validator extended for decoded second-button mask
+
+The existing sample validator `verification/apg-sample-validator/verify-apg.mjs` was extended to compare the JSON-selected `R3`, `L3`, `START`, `SELECT`, and `HOME` controls against the source-decoded mask bits in APG record byte 13.
+
+- `R3: 0x01`
+- `L3: 0x02`
+- `START: 0x04`
+- `SELECT: 0x08`
+- `HOME: 0x10`
+
+The test derives the expected mask from the JSON step's selected button IDs, then verifies that every expected bit is present in the first normal-action record. Unknown button IDs contribute no second-mask bits, avoiding accidental assumptions about other controls.
+
+The validator file was updated and re-fetched from GitHub to verify the committed content. This is an additional cross-check on the supplied sample, not yet a complete generated-fixture test suite. A successful CI run for this exact validator commit is still required before marking the new assertion as runtime-tested.

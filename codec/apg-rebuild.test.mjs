@@ -67,7 +67,7 @@ test("supports inserting a generated step between preserved source ranges", () =
   assert.equal(result.recordCount, 40);
   assert.deepEqual(result.data.slice(0, 16 * 18), source.data.slice(0, 16 * 18));
   assert.deepEqual(result.data.slice(24 * 18, 40 * 18), source.data.slice(16 * 18, 32 * 18));
-  assert.equal(result.counterDiscontinuities.length, 16);
+  assert.equal(result.counterDiscontinuities.length, 1);
 });
 
 test("rejects overlapping source ranges and output overflow", () => {

@@ -98,6 +98,17 @@ async function main() {
   if (hasButtonMask && hasDpadMask) pass("Normal-action APG contains button and d-pad state");
   else fail("Normal-action APG is missing button or d-pad state");
 
+  // Source-decoded second-mask bits: R3=01, L3=02, START=04, SELECT=08, HOME=10.
+  const secondMaskById = { R3: 0x01, L3: 0x02, START: 0x04, SELECT: 0x08, HOME: 0x10 };
+  const expectedSecondMask = selectedIds.reduce((mask, id) => mask | (secondMaskById[id] ?? 0), 0);
+  const actualSecondMask = normalState[13];
+  if ((actualSecondMask & expectedSecondMask) === expectedSecondMask) {
+    pass("JSON R3/L3/START/SELECT/HOME selections are present in APG byte 13",
+      `expected bits=0x${expectedSecondMask.toString(16).padStart(2, "0")}, actual=0x${actualSecondMask.toString(16).padStart(2, "0")}`);
+  } else {
+    fail(`APG byte 13 is missing expected second-mask bits: expected 0x${expectedSecondMask.toString(16)}, actual 0x${actualSecondMask.toString(16)}`);
+  }
+
   let markersOk = true;
   let countersOk = true;
   const firstCounter = records[0].readUInt16BE(16);

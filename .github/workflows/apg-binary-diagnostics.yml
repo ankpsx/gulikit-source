@@ -1,0 +1,28 @@
+name: APG binary diagnostics
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'verification/apg-sample-validator/*.apg'
+      - 'verification/apg-sample-validator/diagnose_apg.py'
+      - '.github/workflows/apg-binary-diagnostics.yml'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect repository APG binaries
+        run: python3 verification/apg-sample-validator/diagnose_apg.py
+      - name: Publish diagnostic report
+        uses: actions/upload-artifact@v4
+        with:
+          name: apg-binary-diagnostics
+          path: apg-diagnostics/
+          if-no-files-found: error
+      - name: Add report to job summary
+        if: always()
+        run: |
+          if [ -f apg-diagnostics/report.md ]; then cat apg-diagnostics/report.md >> "$GITHUB_STEP_SUMMARY"; fi

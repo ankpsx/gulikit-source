@@ -94,6 +94,23 @@ if (chosen) {
   for (let i=0;i<Math.min(5,chosen.validPrefix);i++) console.log(`  - #${i}: ${records[i].toString("hex")}`);
   console.log("- Last 3 records in verified prefix (18-byte hex):");
   for (let i=Math.max(0,chosen.validPrefix-3);i<chosen.validPrefix;i++) console.log(`  - #${i}: ${records[i].toString("hex")}`);
+
+  const json = JSON.parse(await readFile("Official.29steps.json", "utf8"));
+  console.log("");
+  console.log("## Per-step first-record state (16 records per 200 ms step, as observed in this sample)");
+  console.log(`- JSON step count: ${json.macroList.length}`);
+  console.log(`- JSON delay values: ${[...new Set(json.macroList.map(s => s.delay))].join(", ")} ms`);
+  for (let i = 0; i < json.macroList.length; i++) {
+    const step = json.macroList[i];
+    const r = records[i * 16];
+    const axes = [0,2,4,6].map(o => r.readUInt16BE(o));
+    const buttons = [r[12], r[13], r[14]].map(v => "0x" + v.toString(16).padStart(2,"0")).join("/");
+    const action = [
+      ...(step.buttons ?? []).map(b => b.id),
+      ...(step.sticks ?? []).map(s => `${s.stick.id}:${s.direction}:${s.value}`)
+    ].join(",") || "blank";
+    console.log(`- step ${String(i+1).padStart(2,"0")}: ${action}; axes=${axes.join("/")}; trigger=${r.readUInt16BE(8)}/${r.readUInt16BE(10)}; masks/dpad=${buttons}`);
+  }
 }
 console.log("");
 console.log("## Important interpretation limits");

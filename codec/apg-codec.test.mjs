@@ -54,9 +54,11 @@ test("zero delay creates no records and preserves fill", () => {
   assert.ok(result.data.every(v => v === 0xff));
 });
 
-test("rejects absent metadata and invalid layout", () => {
-  assert.throws(() => encodeAPG({ macroList: [] }), /metadata/);
-  assert.throws(() => encodeAPG({ macroList: [] }, { metadata, abxyLayout: "bad" }), /abxyLayout/);
+test("official marker and counter defaults work without caller-supplied metadata", () => {
+  const bytes = encodeAPG({ macroList: [{ delay: 13, buttons: [], sticks: [] }] }, { fileSize: 18 }).data;
+  assert.equal(bytes[15], 0x02);
+  assert.equal(u16(bytes, 16), 11);
+  assert.throws(() => encodeAPG({ macroList: [] }, { abxyLayout: "bad" }), /abxyLayout/);
 });
 
 

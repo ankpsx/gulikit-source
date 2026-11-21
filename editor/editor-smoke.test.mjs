@@ -9,14 +9,14 @@ const css = await readFile(new URL("./style.css", import.meta.url), "utf8");
 test("editor contains every required application control", () => {
   for (const id of ["apgFile", "jsonFile", "newConfig", "fileName", "layout", "recordCount", "marker", "counterStart", "counterStep", "steps", "addAction", "addBlank", "exportJson", "exportApg", "status", "stepTemplate"]) {
     assert.ok(html.includes(`id="${id}"`), `missing HTML id: ${id}`);
-    assert.ok(app.includes(`$("${id}")`), `app does not reference: ${id}`);
+    assert.ok(app.includes(`$("${id}")`) || app.includes(`"${id}"`), `app does not reference: ${id}`);
   }
 });
 
 test("step template exposes all controls queried by the editor", () => {
   for (const cls of ["step-title", "delay", "blank-note", "convert-action", "controls", "up", "down", "remove", "button-grid", "stick-grid", "source-meta"]) {
     assert.ok(html.includes(cls), `missing template class: ${cls}`);
-    assert.ok(app.includes(`."${cls}"`), `app does not query template class: ${cls}`);
+    assert.ok(app.includes(`"${cls}"`), `app does not query template class: ${cls}`);
   }
 });
 

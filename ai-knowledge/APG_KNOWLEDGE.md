@@ -88,7 +88,7 @@
 | 本地实现 | Decoder 状态分组 | decodeAPGSteps() 将相邻且前 15 bytes 控制状态完全相同的记录合并为候选 run；排除 marker/counter，保留原始记录。相同状态的相邻原始步骤无法区分。 | 实现已提交；仅推断状态 run，不声称精确恢复步骤边界 |
 | 本地实现 | ABXY 未指定 | 未指定布局时不猜测，返回 face-button 候选解释。 | 实现已提交 |
 | 本地实现 | Metadata 策略 | Encoder 要求调用者显式传入 marker/counter profile，避免把单一样本规律伪装成通用规则。 | 实现策略已提交 |
-| 本地测试 | 测试覆盖 | APG codec Node 测试覆盖 200 ms→16 records、blank neutral、ABXY、trigger/second mask、D-pad/摇杆基本方向、零延时、参数校验、raw record/tail 保留、ABXY 未指定、metadata、状态分组及延时范围反推。 | CI 已验证 14 pass / 0 fail |\n| 本地测试 | 动作模型与 JSON | 新增测试覆盖普通/空白步骤默认 200 ms、逐步骤修改延时、导入描述符和未知字段保留、JSON 导出 version=1.0、无效 delay/descriptor 拒绝。 | 已提交测试；等待 GitHub Actions 运行 |
+| 本地测试 | 测试覆盖 | APG codec Node 测试覆盖 200 ms→16 records、blank neutral、ABXY、trigger/second mask、D-pad/摇杆基本方向、零延时、参数校验、raw record/tail 保留、ABXY 未指定、metadata、状态分组及延时范围反推。 | CI 已验证 14 pass / 0 fail |\n| 本地测试 | 动作模型与 JSON | 新增测试覆盖普通/空白步骤默认 200 ms、逐步骤修改延时、导入描述符和未知字段保留、JSON 导出 version=1.0、无效 delay/descriptor 拒绝。与 APG codec 合并运行共 19 项测试全部通过。 | CI Run 44911340732；19 pass / 0 fail |
 | 本地测试 | 摇杆边界测试 | 新增缺失值、null、负数、小数、正向值及超 16-bit 轴值测试；这些测试验证本地 encoder 的 JS 算术/字节写入行为，不等于已取得官方硬件边界样本。 | 本地实现/CI 已验证 |
 | 本地测试 | 延时与容量边界 | 新增负延时无记录、超出小型测试缓冲区时记录截断并返回 truncated 标志的测试。 | 本地实现/CI 已验证 |
 | 本地测试 | 最新 CI | Run ID 44910981951，14 项测试全部通过。 | https://github.com/ankpsx/gulikit-source/actions/runs/44910883435 |

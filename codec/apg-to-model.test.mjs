@@ -133,10 +133,10 @@ test("APG import warns that simultaneous directions and original step boundaries
       },
       {
         id: "same-final-state",
-        buttons: [button("D_RIGHT"), button("D_LEFT")],
+        buttons: [button("D_UP"), button("D_RIGHT")],
         sticks: [
+          { stick: { id: "L_STICK", label: "Left Stick", type: "stick" }, direction: "DOWN", value: 100 },
           { stick: { id: "L_STICK", label: "Left Stick", type: "stick" }, direction: "RIGHT", value: 100 },
-          { stick: { id: "L_STICK", label: "Left Stick", type: "stick" }, direction: "LEFT", value: 100 },
         ],
         delay: 200,
         isBlankDelay: false,

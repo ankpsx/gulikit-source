@@ -58,3 +58,37 @@ test("rejects absent metadata and invalid layout", () => {
   assert.throws(() => encodeAPG({ macroList: [] }), /metadata/);
   assert.throws(() => encodeAPG({ macroList: [] }, { metadata, abxyLayout: "bad" }), /abxyLayout/);
 });
+
+
+test("record parser preserves raw records and opaque tail bytes", async () => {
+  const { decodeAPGRecords } = await import("./apg-codec.mjs");
+  const encoded = encodeAPG({ macroList: [{ delay: 13, buttons: [{ id: "A" }, { id: "LT" }],
+    sticks: [] }] }, { metadata, fileSize: 64, fillByte: 0xff });
+  const parsed = decodeAPGRecords(encoded.data, { recordCount: 1, abxyLayout: "PC" });
+  assert.equal(parsed.records.length, 1);
+  assert.deepEqual([...parsed.records[0].raw], [...record(encoded.data)]);
+  assert.equal(parsed.records[0].buttons.includes("A"), true);
+  assert.equal(parsed.records[0].triggers.LT, 4095);
+  assert.equal(parsed.tail.length, 46);
+  assert.ok(parsed.tail.every(byte => byte === 0xff));
+});
+
+test("record parser leaves ABXY interpretation unresolved without layout", async () => {
+  const { decodeAPGRecords } = await import("./apg-codec.mjs");
+  const bytes = encodeAPG({ macroList: [{ delay: 13, buttons: [{ id: "A" }], sticks: [] }] },
+    { metadata, fileSize: 18 }).data;
+  const parsed = decodeAPGRecords(bytes, { recordCount: 1 });
+  assert.deepEqual(parsed.records[0].buttons, []);
+  assert.ok(parsed.records[0].faceButtonCandidates.length > 0);
+});
+
+test("record parser requires explicit record count and preserves counter/marker", async () => {
+  const { decodeAPGRecords } = await import("./apg-codec.mjs");
+  const bytes = encodeAPG({ macroList: [{ delay: 13, buttons: [], sticks: [] }] },
+    { metadata, fileSize: 18 }).data;
+  assert.throws(() => decodeAPGRecords(bytes), /recordCount/);
+  const parsed = decodeAPGRecords(bytes, { recordCount: 1 });
+  assert.equal(parsed.records[0].marker, 2);
+  assert.equal(parsed.records[0].counter, 11);
+  assert.equal(parsed.records[0].raw.length, 18);
+});

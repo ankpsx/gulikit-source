@@ -482,3 +482,18 @@ The page and archive were rechecked beyond the serializer function:
 - The sample does **not** match the archived serializer's complete 1,024-byte output behavior: the sample is 1 MiB and its unused region is `0xFF`, whereas the inspected archived function allocates 1,024 bytes and fills unused bytes with zero. Therefore, the size and fill discrepancy remains unresolved.
 - The sample's exact populated length is 32 records × 18 bytes = 576 bytes. Do not interpret the 1-MiB file as 65,536 16-byte records merely because that is the third-party implementation's model: this sample's active prefix demonstrably aligns on 18-byte boundaries, and its first record's offsets 15–17 contain the `0x02` marker plus the 16-bit counter.
 - These are observations about this one user-supplied sample. Do not generalize the 1-MiB container size, `0xFF` fill rule, or maximum record count to every GuliKit device/editor version without further official evidence.
+
+
+### Section 13 follow-up — user-described actions that produced Auto.apg (2026-11-21)
+
+The user clarifies the test procedure used to create the uploaded `Auto.apg` through the official browser editor:
+- They configured an action in which many controls were selected/pressed together, with a 200 ms delay.
+- They then added one blank-delay action of 200 ms.
+- They exported the resulting file from the editor.
+
+Re-analysis of the 32 populated 18-byte records in this sample:
+- Records 1–16 have identical first 16 bytes: `0F FF 00 01 0F FF 00 01 0F FF 0F FF FF 1F 06 02`.
+- Records 17–32 have identical first 16 bytes: `08 00 08 00 08 00 08 00 00 00 00 00 00 00 00 02`.
+- The 16-bit counter at bytes 16–17 continues monotonically across both groups, increasing by 14 per record.
+- The second group is a neutral-control state in the sample (centered axes 0x0800, zero triggers, zero button masks, neutral D-pad), and is consistent with the user's described blank-delay action. This is a sample-level correspondence, not yet a universal semantic rule.
+- The user's described action sequence and the observed two groups are now linked as provenance. However, do not yet claim that one 200 ms editor step necessarily expands to 16 records: the source-side expansion rule and the precise number/organization of configured actions must be reconciled with the user's UI setup. The observed fact is 16 repeated records in each group.

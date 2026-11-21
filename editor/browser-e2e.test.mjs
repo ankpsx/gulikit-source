@@ -53,10 +53,13 @@ test("browser editor imports, edits, exports JSON and encodes APG", async t => {
   });
   await assert.doesNotReject(() => page.locator(".step").nth(1).waitFor());
   assert.equal(await page.locator(".step").count(), 2);
+  assert.equal(await page.locator("#steps").evaluate(el => getComputedStyle(el).gridTemplateColumns.split(" ").length), 1, "step cards must remain in one column");
+  assert.ok(await page.locator(".key-d-up").evaluate(el => el.getBoundingClientRect().top < document.querySelector(".key-d-down").getBoundingClientRect().top), "D-pad directions should follow controller positions");
   const first = page.locator(".step").nth(0);
   await first.locator(".delay").fill("250");
   await first.locator(".delay").dispatchEvent("change");
   await first.locator(".button-grid label").filter({ hasText: /^B$/ }).locator("input").check();
+  assert.ok(await first.locator(".key-b").evaluate(el => el.classList.contains("selected")), "selected button should be highlighted on the controller layout");
   const jsonDownloadPromise = page.waitForEvent("download");
   await page.locator("#exportJson").click();
   const jsonDownload = await jsonDownloadPromise;

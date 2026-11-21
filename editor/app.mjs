@@ -92,7 +92,7 @@ function stepSummary(step){
     D_UP:"方向键↑",D_DOWN:"方向键↓",D_LEFT:"方向键←",D_RIGHT:"方向键→",
     D_UP_LEFT:"方向键↖",D_UP_RIGHT:"方向键↗",D_DOWN_LEFT:"方向键↙",D_DOWN_RIGHT:"方向键↘"
   };
-  const buttons=step.buttons.map(buttonNames[x=>x.id] ?? buttonNames.A);
+  const buttons=step.buttons.map(button=>buttonNames[button.id]??button.id);
   const sticks=step.sticks.map(item=>{
     const side=item.stick.id==="L_STICK"?"左摇杆":"右摇杆";
     const direction={UP:"上",DOWN:"下",LEFT:"左",RIGHT:"右"}[item.direction]??item.direction;

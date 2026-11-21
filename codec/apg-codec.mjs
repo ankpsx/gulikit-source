@@ -53,8 +53,9 @@ function writeU16BE(bytes, offset, value) {
 }
 
 function axisMagnitude(value) {
-  // Official code uses value || 0, then Math.round(value * 100 / 2047).
-  return Math.round(((value || 0) * 100) / 2047);
+  // Editable JSON stores stick strength as a 0–100 percentage. Convert it
+  // back to the signed 0–2047 APG axis magnitude around the 2048 center.
+  return Math.round(((value || 0) * 2047) / 100);
 }
 
 function actionState(step, abxyLayout) {

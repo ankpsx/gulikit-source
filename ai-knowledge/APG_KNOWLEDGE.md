@@ -457,3 +457,28 @@ The page and archive were rechecked beyond the serializer function:
 - Consequently, the live JavaScript asset has not yet been independently compared byte-for-byte with `script_17.js`. Do not claim that the current live editor necessarily uses the archived serializer, even though the user confirms that the repository source was downloaded from the editor page.
 
 **Next discriminating evidence:** obtain the exact downloaded APG binary (or at least its exact byte count and a hex dump of the first and last 64 bytes) and compare it with a locally reproduced 1,024-byte output from the archived serializer; alternatively, obtain the live `macroEditor.js` response as raw JavaScript through a retrieval route that preserves its bytes. Without one of these, the 1-MiB discrepancy cannot be resolved from the repository history alone.
+
+
+## 13. User-supplied official-browser-export sample — Auto.apg (2026-11-21)
+
+### Provenance and exact file facts
+- The user uploaded `Auto.zip`; its sole entry is `Auto.apg`.
+- ZIP entry uncompressed size: **1,048,576 bytes (1 MiB)**.
+- SHA-256 of the extracted `Auto.apg` bytes: `15b6c5f4d55e50e08e734c9e337f7b739b3d42c612917941373a4b6c66707617`.
+- The user previously confirmed that this file was downloaded using 「导出 APG 文件」 from the official GuliKit browser editor. Treat that as user-supplied provenance, not independent proof of which exact live JavaScript revision ran.
+
+### Direct binary observations
+- Bytes 0–575 contain exactly **32 consecutive 18-byte records**.
+- Byte offset 576 through 1,048,575 is entirely `0xFF` (1,048,000 bytes of trailing fill).
+- The first 18-byte record is:
+  `0F FF 00 01 0F FF 00 01 0F FF 0F FF FF 1F 06 02 00 0B`.
+- Record-relative offsets 0–17 in this sample align with the 18-byte layout previously traced in official `generateAPGContent()`: four 16-bit axis values, two 16-bit trigger values, two button masks, D-pad code, `0x02` marker, and a 16-bit counter. This is strong sample-to-source structural correspondence, but the sample alone does not prove all hardware semantics.
+- For records 0–15, the first 16 bytes repeat as `0F FF 00 01 0F FF 00 01 0F FF 0F FF FF 1F 06 02`; the counter at offsets 16–17 starts at 11 and increments by 14 each record (11, 25, 39, …, 221).
+- For records 16–31, the first 16 bytes repeat as `08 00 08 00 08 00 08 00 00 00 00 00 00 00 00 02`; the same counter sequence continues (235, 249, …, 445).
+- The 32nd record ends at byte 575; the remainder begins immediately with `0xFF` fill. There is no separate 1-MiB header observed before the records in this sample.
+
+### Reconciliation and limits
+- This sample confirms that the user's actual browser-exported file is 1 MiB, and that its populated prefix uses 18-byte records matching the official archived serializer's record stride and field arrangement.
+- The sample does **not** match the archived serializer's complete 1,024-byte output behavior: the sample is 1 MiB and its unused region is `0xFF`, whereas the inspected archived function allocates 1,024 bytes and fills unused bytes with zero. Therefore, the size and fill discrepancy remains unresolved.
+- The sample's exact populated length is 32 records × 18 bytes = 576 bytes. Do not interpret the 1-MiB file as 65,536 16-byte records merely because that is the third-party implementation's model: this sample's active prefix demonstrably aligns on 18-byte boundaries, and its first record's offsets 15–17 contain the `0x02` marker plus the 16-bit counter.
+- These are observations about this one user-supplied sample. Do not generalize the 1-MiB container size, `0xFF` fill rule, or maximum record count to every GuliKit device/editor version without further official evidence.

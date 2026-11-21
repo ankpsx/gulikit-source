@@ -1,64 +1,41 @@
 # APG sample validator
 
-This directory contains a standalone Node.js validator for the user-provided
-`Auto.apg` sample exported from the GuliKit browser editor.
+This directory contains the user-provided APG binary exported by the official GuliKit browser editor, its companion JSON export, and a Node.js cross-validator.
 
-## Scope
+## Files
 
-The checks are deliberately **sample-specific**. They validate the exact observed
-binary characteristics of this one file; they do not define a universal APG
-specification and do not generate APG files.
+- `Auto.apg`: 1 MiB APG export.
+- `macro.json`: JSON export describing the same macro configuration.
+- `verify-apg.mjs`: checks APG record structure and compares tested fields with the JSON actions.
 
-The validator checks:
+## Automated checks
 
-- file size: 1,048,576 bytes (1 MiB);
-- SHA-256: `15b6c5f4d55e50e08e734c9e337f7b739b3d42c612917941373a4b6c66707617`;
-- 32 populated records, each 18 bytes (576 bytes total);
-- records 1–16 and 17–32 have the two expected 16-byte state prefixes;
-- each record has marker byte `0x02` at relative offset 15;
-- the big-endian 16-bit counter at offsets 16–17 starts at 11 and increases by 14;
-- every byte from absolute offset 576 to EOF is `0xFF`.
+This validator is scoped to this supplied two-step sample; it is not a universal APG specification or APG generator. It checks:
 
-The two groups correspond to the user's described setup: one simultaneous-button
-action with 200 ms delay, followed by one blank-delay action with 200 ms delay.
-The validator checks the observed 16+16 record grouping; it does **not** infer
-that each record lasts 12.5 ms or that this timing applies to other files.
+- APG file size is 1,048,576 bytes.
+- JSON contains exactly two actions, both with 200 ms delay: a normal action with selected buttons, followed by a blank delay with no buttons or stick directions.
+- The sample corresponds to 16 + 16 records of 18 bytes; each group repeats its controller state.
+- The blank-delay state has centered axes and released triggers, buttons, and d-pad.
+- The normal action has non-zero trigger fields for JSON LT/RT selections, plus non-zero button and d-pad fields.
+- Each record has marker `0x02` at byte offset 15; the big-endian 16-bit counter advances by 14 per record.
+- The unused area after the records is uniformly padded; the actual padding byte is reported rather than assumed to be universal.
 
-## Requirements
+The 16-record grouping is specific to this sample's 200 ms steps. It does not establish that each record lasts 12.5 ms or that the same grouping applies to other exports.
 
-- Node.js 18 or newer (uses built-in modules only).
+## Run locally
 
-## Run
-
-Extract `Auto.apg` from the supplied ZIP, then run:
+Requirements: Node.js 18 or newer; built-in modules only.
 
 ```bash
-node verify-apg.mjs /path/to/Auto.apg
+node verify-apg.mjs Auto.apg macro.json
 ```
 
-On Windows PowerShell, for example:
+The process exits with code 0 only when every check passes; otherwise it exits with code 1.
 
-```powershell
-node .\verify-apg.mjs .\Auto.apg
-```
+## GitHub Actions
 
-The process exits with code 0 only when all checks pass; otherwise it prints
-each failed check and exits with code 1.
+`.github/workflows/validate-apg-sample.yml` runs this check whenever files in this directory change, and can also be started manually from the Actions tab.
 
-## Important source/sample distinction
+## Source/sample distinction
 
-The archived editor source is `js/script_17.js`, in
-`generateAPGContent()`. Its record stride expression resolves to 18 bytes,
-and its buffer-allocation expression resolves to 1 MiB when the outer
-multiplication is included.
-
-The sample's `0xFF` trailing fill is a directly observed property of this
-`Auto.apg` file. Do not assume it is a universal APG padding rule. The
-archived source's trailing-fill expression and the sample's `0xFF` tail still
-need a separate exact reconciliation. This validator therefore tests the
-sample, not a reconstructed serializer.
-
-## Provenance
-
-Expected sample facts are recorded in `ai-knowledge/APG_KNOWLEDGE.md`,
-Section 13. The sample itself is not copied into this repository.
+The archived official editor source is `js/script_17.js`, in `generateAPGContent()`. Its record stride expression resolves to 18 bytes, and its buffer allocation resolves to 1 MiB when the outer multiplication is included. This validator tests only the supplied sample and explicitly listed fields; it does not claim to fully decode every APG field or define a universal APG format.

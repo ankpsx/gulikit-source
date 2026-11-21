@@ -33,6 +33,20 @@ Get-FileHash .\\GuliKit-APG-Editor-Windows-x64.zip -Algorithm SHA256
 
 此哈希是 GitHub Actions Artifact ZIP 的哈希，不是解压后 EXE 的哈希。
 
+## 正式 GitHub Release（长期下载）
+
+仓库已配置按版本 Tag 自动发布 Windows 安装程序：
+
+1. 确认 `package.json` 中的版本号。
+2. 在该版本对应的最新 main commit 上创建版本 Tag，例如 `v0.1.0`。
+3. 推送 Tag：`git push origin v0.1.0`。
+4. GitHub Actions 自动在 Windows runner 上执行 `npm run dist`。
+5. 构建成功后，自动创建 GitHub Release，并将 `GuliKit-APG-Editor-<version>-Windows-x64.exe` 上传为 Release asset。
+
+正式发布页：[GitHub Releases](https://github.com/ankpsx/gulikit-source/releases/latest)。
+
+注意：仅普通分支构建会生成短期 Actions Artifact；只有推送符合 `v*` 格式的 Tag 才会创建正式 Release。请勿重复使用已发布的版本 Tag。
+
 ## 重要说明
 
 - Actions Artifact 有保存期限，不是永久下载地址。到期后需重新运行 Windows installer workflow。

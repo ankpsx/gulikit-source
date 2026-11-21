@@ -1,0 +1,292 @@
+{
+  "fileName": "17",
+  "version": "1.0",
+  "macroList": [
+    {
+      "id": "apg-step-1",
+      "buttons": [
+        {
+          "id": "LB",
+          "label": "LB",
+          "type": "button"
+        },
+        {
+          "id": "LT",
+          "label": "LT",
+          "type": "trigger"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-2",
+      "buttons": [
+        {
+          "id": "RB",
+          "label": "RB",
+          "type": "button"
+        },
+        {
+          "id": "RT",
+          "label": "RT",
+          "type": "trigger"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-3",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "L_STICK",
+            "label": "Left Stick",
+            "type": "stick"
+          },
+          "direction": "RIGHT",
+          "value": 100
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-4",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "L_STICK",
+            "label": "Left Stick",
+            "type": "stick"
+          },
+          "direction": "DOWN",
+          "value": 100
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-5",
+      "buttons": [
+        {
+          "id": "START",
+          "label": "START",
+          "type": "button"
+        },
+        {
+          "id": "SELECT",
+          "label": "SELECT",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-6",
+      "buttons": [
+        {
+          "id": "A",
+          "label": "A",
+          "type": "button"
+        },
+        {
+          "id": "B",
+          "label": "B",
+          "type": "button"
+        },
+        {
+          "id": "X",
+          "label": "X",
+          "type": "button"
+        },
+        {
+          "id": "Y",
+          "label": "Y",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-7",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "R_STICK",
+            "label": "Right Stick",
+            "type": "stick"
+          },
+          "direction": "DOWN",
+          "value": 100
+        },
+        {
+          "stick": {
+            "id": "R_STICK",
+            "label": "Right Stick",
+            "type": "stick"
+          },
+          "direction": "LEFT",
+          "value": 100
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-8",
+      "buttons": [
+        {
+          "id": "D_LEFT",
+          "label": "←",
+          "type": "button",
+          "position": {
+            "row": 1,
+            "col": 0
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-9",
+      "buttons": [
+        {
+          "id": "D_DOWN",
+          "label": "↓",
+          "type": "button",
+          "position": {
+            "row": 2,
+            "col": 2
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-10",
+      "buttons": [
+        {
+          "id": "D_UP_RIGHT",
+          "label": "↗",
+          "type": "button",
+          "position": {
+            "row": 0,
+            "col": 4
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-11",
+      "buttons": [
+        {
+          "id": "D_DOWN_RIGHT",
+          "label": "↘",
+          "type": "button",
+          "position": {
+            "row": 2,
+            "col": 4
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 393,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-12",
+      "buttons": [
+        {
+          "id": "D_UP_RIGHT",
+          "label": "↗",
+          "type": "button",
+          "position": {
+            "row": 0,
+            "col": 4
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-13",
+      "buttons": [
+        {
+          "id": "A",
+          "label": "A",
+          "type": "button"
+        },
+        {
+          "id": "X",
+          "label": "X",
+          "type": "button"
+        },
+        {
+          "id": "Y",
+          "label": "Y",
+          "type": "button"
+        },
+        {
+          "id": "D_UP",
+          "label": "↑",
+          "type": "button",
+          "position": {
+            "row": 0,
+            "col": 2
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-14",
+      "buttons": [],
+      "sticks": [],
+      "delay": 1988,
+      "isBlankDelay": true
+    },
+    {
+      "id": "apg-step-15",
+      "buttons": [
+        {
+          "id": "LB",
+          "label": "LB",
+          "type": "button"
+        }
+      ],
+      "sticks": [],
+      "delay": 2988,
+      "isBlankDelay": false
+    },
+    {
+      "id": "apg-step-16",
+      "buttons": [],
+      "sticks": [],
+      "delay": 1988,
+      "isBlankDelay": true
+    }
+  ]
+}

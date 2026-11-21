@@ -1,0 +1,505 @@
+{
+  "fileName": "17",
+  "macroList": [
+    {
+      "id": "1795285812273",
+      "buttons": [
+        {
+          "id": "LB",
+          "label": "L",
+          "type": "button",
+          "position": {
+            "row": 0,
+            "col": 0
+          }
+        },
+        {
+          "id": "LT",
+          "label": "ZL",
+          "type": "trigger",
+          "position": {
+            "row": 0,
+            "col": 1
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285814439",
+      "buttons": [
+        {
+          "id": "RB",
+          "label": "R",
+          "type": "button",
+          "position": {
+            "row": 0,
+            "col": 6
+          }
+        },
+        {
+          "id": "RT",
+          "label": "ZR",
+          "type": "trigger",
+          "position": {
+            "row": 0,
+            "col": 5
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285817213",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "L_STICK",
+            "label": "L-Stick",
+            "type": "stick",
+            "position": {
+              "row": 3,
+              "col": 1
+            }
+          },
+          "direction": "LEFT",
+          "value": 100
+        },
+        {
+          "stick": {
+            "id": "L_STICK",
+            "label": "L-Stick",
+            "type": "stick",
+            "position": {
+              "row": 3,
+              "col": 1
+            }
+          },
+          "direction": "RIGHT",
+          "value": 100
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285820445",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "L_STICK",
+            "label": "L-Stick",
+            "type": "stick",
+            "position": {
+              "row": 3,
+              "col": 1
+            }
+          },
+          "direction": "UP",
+          "value": 100
+        },
+        {
+          "stick": {
+            "id": "L_STICK",
+            "label": "L-Stick",
+            "type": "stick",
+            "position": {
+              "row": 3,
+              "col": 1
+            }
+          },
+          "direction": "DOWN",
+          "value": 100
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285825738",
+      "buttons": [
+        {
+          "id": "SELECT",
+          "label": "SELECT",
+          "type": "button",
+          "position": {
+            "row": 2,
+            "col": 2
+          }
+        },
+        {
+          "id": "START",
+          "label": "START",
+          "type": "button",
+          "position": {
+            "row": 2,
+            "col": 4
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285829133",
+      "buttons": [
+        {
+          "id": "X",
+          "label": "X",
+          "type": "button",
+          "position": {
+            "row": 2,
+            "col": 3
+          }
+        },
+        {
+          "id": "A",
+          "label": "A",
+          "type": "button",
+          "position": {
+            "row": 3,
+            "col": 4
+          }
+        },
+        {
+          "id": "B",
+          "label": "B",
+          "type": "button",
+          "position": {
+            "row": 2,
+            "col": 5
+          }
+        },
+        {
+          "id": "Y",
+          "label": "Y",
+          "type": "button",
+          "position": {
+            "row": 1,
+            "col": 4
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285847344",
+      "buttons": [],
+      "sticks": [
+        {
+          "stick": {
+            "id": "R_STICK",
+            "label": "R-Stick",
+            "type": "stick",
+            "position": {
+              "row": 3,
+              "col": 5
+            }
+          },
+          "direction": "RIGHT",
+          "value": 100
+        },
+        {
+          "stick": {
+            "id": "R_STICK",
+            "label": "R-Stick",
+            "type": "stick",
+            "position": {
+              "row": 3,
+              "col": 5
+            }
+          },
+          "direction": "UP",
+          "value": 100
+        },
+        {
+          "stick": {
+            "id": "R_STICK",
+            "label": "R-Stick",
+            "type": "stick",
+            "position": {
+              "row": 3,
+              "col": 5
+            }
+          },
+          "direction": "LEFT",
+          "value": 100
+        },
+        {
+          "stick": {
+            "id": "R_STICK",
+            "label": "R-Stick",
+            "type": "stick",
+            "position": {
+              "row": 3,
+              "col": 5
+            }
+          },
+          "direction": "DOWN",
+          "value": 100
+        }
+      ],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285849825",
+      "buttons": [
+        {
+          "id": "D_RIGHT",
+          "label": "→",
+          "type": "button",
+          "position": {
+            "row": 1,
+            "col": 4
+          }
+        },
+        {
+          "id": "D_LEFT",
+          "label": "←",
+          "type": "button",
+          "position": {
+            "row": 1,
+            "col": 0
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285853554",
+      "buttons": [
+        {
+          "id": "D_UP",
+          "label": "↑",
+          "type": "button",
+          "position": {
+            "row": 0,
+            "col": 2
+          }
+        },
+        {
+          "id": "D_DOWN",
+          "label": "↓",
+          "type": "button",
+          "position": {
+            "row": 2,
+            "col": 2
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285856165",
+      "buttons": [
+        {
+          "id": "D_UP_LEFT",
+          "label": "↖",
+          "type": "button",
+          "position": {
+            "row": 0,
+            "col": 0
+          }
+        },
+        {
+          "id": "D_UP_RIGHT",
+          "label": "↗",
+          "type": "button",
+          "position": {
+            "row": 0,
+            "col": 4
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285858473",
+      "buttons": [
+        {
+          "id": "D_UP_RIGHT",
+          "label": "↗",
+          "type": "button",
+          "position": {
+            "row": 0,
+            "col": 4
+          }
+        },
+        {
+          "id": "D_DOWN_RIGHT",
+          "label": "↘",
+          "type": "button",
+          "position": {
+            "row": 2,
+            "col": 4
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285860587",
+      "buttons": [
+        {
+          "id": "D_DOWN_LEFT",
+          "label": "↙",
+          "type": "button",
+          "position": {
+            "row": 2,
+            "col": 0
+          }
+        },
+        {
+          "id": "D_DOWN_RIGHT",
+          "label": "↘",
+          "type": "button",
+          "position": {
+            "row": 2,
+            "col": 4
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285863668",
+      "buttons": [
+        {
+          "id": "D_UP_LEFT",
+          "label": "↖",
+          "type": "button",
+          "position": {
+            "row": 0,
+            "col": 0
+          }
+        },
+        {
+          "id": "D_DOWN_RIGHT",
+          "label": "↘",
+          "type": "button",
+          "position": {
+            "row": 2,
+            "col": 4
+          }
+        },
+        {
+          "id": "D_UP_RIGHT",
+          "label": "↗",
+          "type": "button",
+          "position": {
+            "row": 0,
+            "col": 4
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285879154",
+      "buttons": [
+        {
+          "id": "D_RIGHT",
+          "label": "→",
+          "type": "button",
+          "position": {
+            "row": 1,
+            "col": 4
+          }
+        },
+        {
+          "id": "D_UP",
+          "label": "↑",
+          "type": "button",
+          "position": {
+            "row": 0,
+            "col": 2
+          }
+        },
+        {
+          "id": "Y",
+          "label": "Y",
+          "type": "button",
+          "position": {
+            "row": 1,
+            "col": 4
+          }
+        },
+        {
+          "id": "X",
+          "label": "X",
+          "type": "button",
+          "position": {
+            "row": 2,
+            "col": 3
+          }
+        },
+        {
+          "id": "B",
+          "label": "B",
+          "type": "button",
+          "position": {
+            "row": 2,
+            "col": 5
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 200,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285886879",
+      "buttons": [],
+      "sticks": [],
+      "delay": 2000,
+      "isBlankDelay": true
+    },
+    {
+      "id": "1795285900801",
+      "buttons": [
+        {
+          "id": "LB",
+          "label": "L",
+          "type": "button",
+          "position": {
+            "row": 0,
+            "col": 0
+          }
+        }
+      ],
+      "sticks": [],
+      "delay": 3000,
+      "isBlankDelay": false
+    },
+    {
+      "id": "1795285904570",
+      "buttons": [],
+      "sticks": [],
+      "delay": 2000,
+      "isBlankDelay": true
+    }
+  ],
+  "version": "1.0"
+}

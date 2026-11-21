@@ -3,7 +3,7 @@ import { apgToEditableModel } from "../codec/apg-to-model.mjs";
 import { rebuildAPGFromEditableModel } from "../codec/apg-edit-rebuild.mjs";
 import { encodeAPG } from "../codec/apg-codec.mjs";
 const $=id=>document.getElementById(id), BUTTONS=["A","B","X","Y","LB","RB","LT","RT","L3","R3","START","SELECT","HOME","D_UP","D_DOWN","D_LEFT","D_RIGHT","D_UP_LEFT","D_UP_RIGHT","D_DOWN_LEFT","D_DOWN_RIGHT"], STICKS=["L_STICK","R_STICK"], DIRS=["UP","DOWN","LEFT","RIGHT"];
-let config={fileName:"macro",version:"1.0",macroList:[]}, importedModel=null, originalBytes=null, serial=0;
+let config={fileName:"macro",version:"1.0",macroList:[]}, importedModel=null, originalBytes=null, serial=0, activeStepId=null;
 const newId=()=>"local-"+Date.now()+"-"+(++serial);
 const status=(s,bad=false)=>{$("status").textContent=s;$("status").style.color=bad?"#ff9f9f":"var(--accent)";};
 const base=()=>(($("fileName").value.trim()||"macro").replace(/[\\/:*?"<>|]/g,"_"));
@@ -57,16 +57,62 @@ function localizeError(message){
   return output.split(". ").map(part=>localizeWarning(part.endsWith(".")?part:part+".")).join("。");
 }
 
-function render(){ $("fileName").value=config.fileName;const host=$("steps");host.replaceChildren();if(!config.macroList.length){host.innerHTML='<div class="empty">当前没有步骤。请使用上方按钮添加。</div>';return;}
-config.macroList.forEach((step,i)=>{const n=$("stepTemplate").content.firstElementChild.cloneNode(true);n.draggable=true;n.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",String(i));e.dataTransfer.effectAllowed="move";});n.addEventListener("dragover",e=>{e.preventDefault();e.dataTransfer.dropEffect="move";});n.addEventListener("drop",e=>{e.preventDefault();const from=Number(e.dataTransfer.getData("text/plain"));if(Number.isInteger(from)&&from!==i&&from>=0&&from<config.macroList.length){const [moved]=config.macroList.splice(from,1);config.macroList.splice(i,0,moved);render();}});n.querySelector(".step-title").textContent=(i+1)+". "+(step.isBlankDelay?"空白延时":"动作步骤");const delay=n.querySelector(".delay");delay.value=step.delay;delay.onchange=()=>step.delay=Number(delay.value);n.querySelector(".blank-note").classList.toggle("hidden",!step.isBlankDelay);n.querySelector(".convert-action").onclick=()=>{step.isBlankDelay=false;render();};n.querySelector(".controls").classList.toggle("hidden",!!step.isBlankDelay);n.querySelector(".up").disabled=i===0;n.querySelector(".down").disabled=i===config.macroList.length-1;n.querySelector(".up").onclick=()=>move(i,-1);n.querySelector(".down").onclick=()=>move(i,1);n.querySelector(".remove").onclick=()=>{config.macroList.splice(i,1);render();};
-const bg=n.querySelector(".button-grid");for(const bid of BUTTONS){const l=document.createElement("label");l.className="check key-"+bid.toLowerCase().replaceAll("_","-");l.dataset.button=bid;const c=document.createElement("input");c.type="checkbox";c.checked=step.buttons.some(x=>x.id===bid);c.setAttribute("aria-label",bid);l.classList.toggle("selected",c.checked);c.onchange=()=>{step.buttons=step.buttons.filter(x=>x.id!==bid);if(c.checked)step.buttons.push({id:bid,label:bid,type:["LT","RT"].includes(bid)?"trigger":"button"});l.classList.toggle("selected",c.checked);step.isBlankDelay=false;};const caption=document.createElement("span");caption.textContent=({D_UP:"↑",D_DOWN:"↓",D_LEFT:"←",D_RIGHT:"→",D_UP_LEFT:"↖",D_UP_RIGHT:"↗",D_DOWN_LEFT:"↙",D_DOWN_RIGHT:"↘",START:"＋",SELECT:"－",HOME:"⌂",LB:"LB",RB:"RB",LT:"LT",RT:"RT"})[bid]??bid;l.append(c,caption);bg.append(l);}
-const sg=n.querySelector(".stick-grid");for(const sid of STICKS){const card=document.createElement("div");card.className="stick-card";const title=document.createElement("strong");title.textContent=sid==="L_STICK"?"左摇杆":"右摇杆";card.append(title);for(const dir of DIRS){const old=step.sticks.find(x=>x.stick.id===sid&&x.direction===dir),l=document.createElement("label"),c=document.createElement("input"),v=document.createElement("input");c.type="checkbox";c.checked=!!old;v.type="number";v.min="0";v.max="100";v.step="1";v.value=old?.value??100;v.disabled=!old;c.onchange=()=>{step.sticks=step.sticks.filter(x=>!(x.stick.id===sid&&x.direction===dir));if(c.checked)step.sticks.push({stick:{id:sid,label:sid==="L_STICK"?"Left Stick":"Right Stick",type:"stick"},direction:dir,value:Number(v.value)});v.disabled=!c.checked;};v.onchange=()=>{const x=step.sticks.find(x=>x.stick.id===sid&&x.direction===dir);if(x)x.value=Number(v.value);};l.append(c,document.createTextNode(dir+" (%)"),v);card.append(l);}sg.append(card);}
-n.querySelector(".source-meta").textContent=step.apgSource?JSON.stringify({recordStart:step.apgSource.recordStart,recordCount:step.apgSource.recordCount,possibleDelayMs:step.apgSource.possibleDelayMs},null,2):"新建步骤：没有原始 APG 记录范围。";host.append(n);});}
+function renderButtonEditor(step){
+  const bg=$("buttonGrid");bg.replaceChildren();
+  for(const bid of BUTTONS){
+    const l=document.createElement("label");l.className="check key-"+bid.toLowerCase().replaceAll("_","-");l.dataset.button=bid;
+    const c=document.createElement("input");c.type="checkbox";c.checked=step.buttons.some(x=>x.id===bid);c.setAttribute("aria-label",bid);
+    l.classList.toggle("selected",c.checked);
+    c.onchange=()=>{step.buttons=step.buttons.filter(x=>x.id!==bid);if(c.checked)step.buttons.push({id:bid,label:bid,type:["LT","RT"].includes(bid)?"trigger":"button"});l.classList.toggle("selected",c.checked);step.isBlankDelay=false;};
+    const caption=document.createElement("span");
+    caption.textContent=({D_UP:"↑",D_DOWN:"↓",D_LEFT:"←",D_RIGHT:"→",D_UP_LEFT:"↖",D_UP_RIGHT:"↗",D_DOWN_LEFT:"↙",D_DOWN_RIGHT:"↘",START:"＋",SELECT:"－",HOME:"⌂",LB:"L",RB:"R",LT:"ZL",RT:"ZR",L3:"L3",R3:"R3"})[bid]??bid;
+    l.append(c,caption);bg.append(l);
+  }
+}
+function renderStickEditor(step){
+  const sg=$("stickGrid");sg.replaceChildren();
+  for(const sid of STICKS){
+    const card=document.createElement("div");card.className="stick-card";
+    const title=document.createElement("strong");title.textContent=sid==="L_STICK"?"左摇杆":"右摇杆";card.append(title);
+    for(const dir of DIRS){
+      const old=step.sticks.find(x=>x.stick.id===sid&&x.direction===dir),l=document.createElement("label"),c=document.createElement("input"),v=document.createElement("input");
+      c.type="checkbox";c.checked=!!old;v.type="number";v.min="0";v.max="100";v.step="1";v.value=old?.value??100;v.disabled=!old;
+      c.onchange=()=>{step.sticks=step.sticks.filter(x=>!(x.stick.id===sid&&x.direction===dir));if(c.checked)step.sticks.push({stick:{id:sid,label:sid==="L_STICK"?"Left Stick":"Right Stick",type:"stick"},direction:dir,value:Number(v.value)});v.disabled=!c.checked;};
+      v.onchange=()=>{const x=step.sticks.find(x=>x.stick.id===sid&&x.direction===dir);if(x)x.value=Number(v.value);};
+      l.append(c,document.createTextNode(dir+" (%)"),v);card.append(l);
+    }
+    sg.append(card);
+  }
+}
+function render(){
+  $("fileName").value=config.fileName;const host=$("steps");host.replaceChildren();
+  if(!config.macroList.length){host.innerHTML='<div class="empty">当前没有步骤。请使用上方按钮添加。</div>';activeStepId=null;$("stepEditor").classList.add("hidden");return;}
+  if(!config.macroList.some(step=>step.id===activeStepId&&!step.isBlankDelay))activeStepId=config.macroList.find(step=>!step.isBlankDelay)?.id??null;
+  config.macroList.forEach((step,i)=>{
+    const n=$("stepTemplate").content.firstElementChild.cloneNode(true);n.draggable=true;n.classList.toggle("active-step",step.id===activeStepId);
+    n.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",String(i));e.dataTransfer.effectAllowed="move";});
+    n.addEventListener("dragover",e=>{e.preventDefault();e.dataTransfer.dropEffect="move";});
+    n.addEventListener("drop",e=>{e.preventDefault();const from=Number(e.dataTransfer.getData("text/plain"));if(Number.isInteger(from)&&from!==i&&from>=0&&from<config.macroList.length){const [moved]=config.macroList.splice(from,1);config.macroList.splice(i,0,moved);render();}});
+    n.querySelector(".step-title").textContent=(i+1)+". "+(step.isBlankDelay?"空白延时":"动作步骤");
+    const delay=n.querySelector(".delay");delay.value=step.delay;delay.onchange=()=>step.delay=Number(delay.value);
+    n.querySelector(".blank-note").classList.toggle("hidden",!step.isBlankDelay);
+    n.querySelector(".convert-action").onclick=()=>{step.isBlankDelay=false;activeStepId=step.id;render();};
+    const edit=n.querySelector(".edit-step");edit.disabled=!!step.isBlankDelay;edit.textContent=step.id===activeStepId?"正在编辑":"编辑按键";edit.onclick=()=>{activeStepId=step.id;render();};
+    n.querySelector(".up").disabled=i===0;n.querySelector(".down").disabled=i===config.macroList.length-1;
+    n.querySelector(".up").onclick=()=>move(i,-1);n.querySelector(".down").onclick=()=>move(i,1);
+    n.querySelector(".remove").onclick=()=>{config.macroList.splice(i,1);if(activeStepId===step.id)activeStepId=null;render();};
+    n.querySelector(".source-meta").textContent=step.apgSource?JSON.stringify({recordStart:step.apgSource.recordStart,recordCount:step.apgSource.recordCount,possibleDelayMs:step.apgSource.possibleDelayMs},null,2):"新建步骤：没有原始 APG 记录范围。";
+    host.append(n);
+  });
+  const active=config.macroList.find(step=>step.id===activeStepId&&!step.isBlankDelay),editor=$("stepEditor");
+  if(active){editor.classList.remove("hidden");$("activeStepTitle").textContent="当前编辑："+(config.macroList.indexOf(active)+1)+". 动作步骤";renderButtonEditor(active);renderStickEditor(active);}
+  else editor.classList.add("hidden");
+}
 $("fileName").onchange=()=>config.fileName=$("fileName").value.trim()||"macro";
-$("addAction").onclick=()=>{config.macroList.push(createActionStep({id:newId()}));render();};
+$("addAction").onclick=()=>{const step=createActionStep({id:newId()});config.macroList.push(step);activeStepId=step.id;render();};
 $("addBlank").onclick=()=>{config.macroList.push(createBlankDelayStep({id:newId()}));render();};
-$("clearSteps").onclick=()=>{config.macroList=[];render();status("宏列表已清空。");};
-$("newConfig").onclick=()=>{config={fileName:"macro",version:"1.0",macroList:[]};importedModel=null;originalBytes=null;$("recordCount").value="";$("layout").value="SWITCH";$("sourceInfo").textContent="已新建宏。导出时自动使用官方 APG 容器规则。";render();status("已创建新宏。");};
+$("clearSteps").onclick=()=>{config.macroList=[];activeStepId=null;render();status("宏列表已清空。");};
+$("newConfig").onclick=()=>{config={fileName:"macro",version:"1.0",macroList:[]};activeStepId=null;importedModel=null;originalBytes=null;$("recordCount").value="";$("layout").value="SWITCH";$("sourceInfo").textContent="已新建宏。导出时自动使用官方 APG 容器规则。";render();status("已创建新宏。");};
 $("jsonFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{config=normalizeMacroConfig(JSON.parse(await f.text()));importedModel=null;originalBytes=null;$("layout").value="SWITCH";$("sourceInfo").textContent="JSON 已加载。APG 导出会按照官方通用序列化规则生成，不限制步骤数量；Marker、Counter 和尾部填充均自动处理。JSON 本身不包含 ABXY 布局信息，默认使用与官方样本一致的 Switch 布局，可在上方切换。";render();status("JSON 导入成功；可以直接导出 APG（支持任意步骤数）。");}catch(x){status("JSON 导入失败：无法解析文件，请确认 JSON 内容和格式正确。",true);}e.target.value="";};
 $("apgFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{originalBytes=new Uint8Array(await f.arrayBuffer());const count=$("recordCount").value.trim(),opts={abxyLayout:$("layout").value,fileName:f.name.replace(/\.[^.]+$/,""),...(count?{recordCount:Number(count)}:{autoDetectRecordCount:true})};importedModel=apgToEditableModel(originalBytes,opts);config=normalizeMacroConfig(importedModel.config);$("recordCount").value=importedModel.source.recordCount;$("sourceInfo").textContent="APG 记录："+importedModel.source.recordCount+"；推断步骤："+config.macroList.length+"\n"+importedModel.warnings.map(localizeWarning).join("\n");render();status("APG 导入完成。请核对推断步骤和延时范围。");}catch(x){importedModel=null;originalBytes=null;status("APG 导入失败："+localizeError(x.message)+"。如果自动检测结果不明确，请手动填写记录数。",true);}e.target.value="";};
 $("exportJson").onclick=()=>{try{config.fileName=base();download(base()+".json",new TextEncoder().encode(exportMacroJson(publicConfig())),"application/json");status("JSON 导出完成。");}catch(x){status("JSON 导出失败："+x.message,true);}};

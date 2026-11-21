@@ -67,6 +67,10 @@ test("stick values are restored as 0–100 percentages from APG axis offsets", (
   ];
   for (const [direction, percentage] of cases) {
     const bytes = new Uint8Array(18);
+    for (const offset of [0, 2, 4, 6]) {
+      bytes[offset] = 0x08;
+      bytes[offset + 1] = 0x00;
+    }
     const delta = Math.round(percentage * 2047 / 100);
     const raw = direction === "RIGHT" ? 2048 + delta : 2048 - delta;
     bytes[0] = (raw >> 8) & 0xff;

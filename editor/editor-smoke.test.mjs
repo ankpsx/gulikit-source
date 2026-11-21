@@ -37,4 +37,8 @@ test("editor is Simplified Chinese, local-first and responsive", () => {
   assert.ok(html.includes('type="module" src="./app.mjs"'));
   assert.ok(css.includes("@media(max-width:900px)"));
   assert.ok(css.includes("@media(max-width:560px)"));
+  assert.ok(css.includes("grid-template-columns:minmax(0,1fr)"), "steps must stay in one vertical column");
+  assert.ok(css.includes("grid-template-areas:"), "button choices must use a controller-like physical layout");
+  assert.ok(html.includes("手柄按键布局") && html.includes("手柄按键选择"), "controller diagram must be clearly labeled");
+  assert.ok(app.includes("l.classList.toggle(\"selected\",c.checked)"), "selected controller buttons must be visibly highlighted");
 });

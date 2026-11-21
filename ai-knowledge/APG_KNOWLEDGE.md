@@ -110,6 +110,53 @@
 - 导出失败必须显示错误，不得静默下载错误文件。
 - APG 容量不足必须明确提示，不得把截断文件说成完整成功。
 
+## B2.1. DOM 契约与界面视觉规格
+
+复现现有 UI 时，以下 DOM ID/class 是 \`editor/app.mjs\` 与 Playwright E2E 使用的契约。修改 ID 时必须同步修改 app 和测试。
+
+顶层 ID：
+
+| ID | 用途 |
+|---|---|
+| \`apgFile\` | APG 文件 input |
+| \`jsonFile\` | JSON 文件 input |
+| \`newConfig\` | 建立新宏 |
+| \`fileName\` | 文件名 input |
+| \`layout\` | PC/SWITCH select |
+| \`recordCount\` | APG 有效记录数输入 |
+| \`sourceInfo\` | 当前文件来源和解析警告 |
+| \`addAction\` | 新增动作步骤 |
+| \`addBlank\` | 新增空白延时 |
+| \`clearSteps\` | 清空步骤 |
+| \`steps\` | 步骤卡片容器 |
+| \`exportJson\` | 导出 JSON |
+| \`exportApg\` | 导出 APG |
+| \`status\` | 成功/失败/警告状态 |
+| \`stepTemplate\` | 单步卡片 HTML template |
+
+每个 step template 的关键 class：
+
+- \`.step\`：步骤卡片。
+- \`.step-title\`：显示序号和类型。
+- \`.delay\`：当前步骤 delay 输入。
+- \`.blank-note\`：空白延时提示。
+- \`.convert-action\`：空白步骤转普通动作。
+- \`.controls\`：动作编辑区。
+- \`.button-grid\`：按键/D-pad/trigger 选择区。
+- \`.stick-grid\`：左右摇杆选择区。
+- \`.up\`、\`.down\`、\`.remove\`：移动/删除。
+- \`.source-meta\`：APG provenance 详情。
+
+视觉基线（来自当前 CSS）：
+
+- 页面背景 \`#0b1220\`；面板 \`#131e30\`；次级面板 \`#1a2940\`。
+- 边线 \`#2b3b53\`；主文字 \`#e8eef8\`；次文字 \`#9eacc1\`；强调色 \`#4de0c1\`。
+- 系统 sans-serif 字体，基础字号 15px，行高 1.5。
+- 主内容最大宽度 1480px，深色卡片式面板、圆角边框。
+- 桌面端 settings 六列；宽度不超过 900px 时三列、不超过 560px 时两列。
+- 不超过 900px 时左右摇杆编辑区改为单列；不超过 560px 时 stick cards 改为单列。
+- 页面使用繁体中文 UI 文案；新实现不得意外切换成全英文或简体中文，除非用户明确要求。
+
 ## B3. 按键与方向列表
 
 编辑器当前支持的按钮 ID：

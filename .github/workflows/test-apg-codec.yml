@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - "codec/**"
+      - "editor/**"
       - ".github/workflows/test-apg-codec.yml"
   pull_request:
     paths:
@@ -19,4 +20,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: node --check editor/app.mjs
       - run: node --test codec/*.test.mjs

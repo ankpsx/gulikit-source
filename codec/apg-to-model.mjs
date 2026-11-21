@@ -94,7 +94,8 @@ function inferStep(run, index, preferredDelayMs) {
 /**
  * Decode APG into a JSON-shaped editable model.
  *
- * Required options: recordCount, abxyLayout (PC or SWITCH).
+ * Required option: abxyLayout (PC or SWITCH). Supply recordCount explicitly,
+ * or opt in to autoDetectRecordCount when conservative detection is acceptable.
  * Ambiguous delays default to 200 ms when it falls inside the valid range,
  * otherwise the minimum valid integer delay. Pass preferredDelayMs to override.
  */

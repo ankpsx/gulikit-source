@@ -30,7 +30,7 @@
 <tr><td align="center">96</td><td>**官方样本** · 29 步 APG 二进制审计</td><td>Official.29steps.json 的 JSON 对照已完成，但 Official.29steps.apg 尚未成功读取并逐条检查 18-byte records；因此当前没有完成 29 步 APG 二进制交叉验证的证据。</td><td>未完成；不得标记为二进制验证通过</td></tr>
 <tr><td align="center">97</td><td>**样本验证器** · 29 步样本覆盖</td><td>verification/apg-sample-validator/verify-apg.mjs 与 README 当前仍以旧 Auto.apg + macro.json 两步样本为默认输入；尚未更新为官方 29 步样本及对应的逐记录核验。</td><td>待更新；现有验证器结果不能替代 29 步样本审计</td></tr>
 <tr><td align="center">98</td><td>**最终验收** · 官方网页与 Windows 实机</td><td>尚未在官方网页实际导入本程序导出的 JSON，确认 D-pad 八方向箭头及位置；Windows 新版安装包尚未因本次 D-pad 修正重新构建，用户 Windows 实机安装/启动验收也未完成。</td><td>待执行；源码提交或测试代码存在不等于网页/实机验收通过</td></tr>
-</tbody></table>
+<tr><td align="center">99</td><td>**APG 导入 · 摇杆力度反向换算修正（2026-11-22）**</td><td>APG 轴偏移量应按 `Math.abs(delta) * 100 / 2047` 还原为 0–100 力度百分比。旧实现使用 `Math.abs(delta) * 2047 / 100`，会把最大偏移错误放大到 41902.09。仅修正 APG→可编辑模型导入换算；本次未改 APG 编码器数值规则。</td><td>源码修复已提交：`751999488849e4e305510f3cf53dbecef4f3ec55`；以 29 步官方 JSON 中的力度 100 为对照背景；不代表已完成官方 APG 二进制逐记录审计</td></tr><tr><td align="center">100</td><td>**APG 导入 · 摇杆力度回归测试**</td><td>新增左右方向力度 25/50/75/100 的 APG 轴偏移反向还原测试；测试夹具将四个轴先初始化为中位数 2048，再单独设置待测轴，避免其他未初始化轴被误识别为摇杆动作。D-pad 八方向箭头标签和官方 position 回归测试保留。</td><td>测试提交：`31aaa3ad3dfe99269643127f151777adb348a706`；测试夹具曾在首次 CI 中失败，修正后通过</td></tr><tr><td align="center">101</td><td>**APG codec CI · 摇杆与 D-pad 回归**</td><td>GitHub Actions `44930814800` 在提交 `31aaa3ad3dfe99269643127f151777adb348a706` 上完成并通过；workflow 包含 Chromium 浏览器 E2E、codec 与 editor 冒烟测试。此结果证明仓库自动化测试通过，不等同于官方网页人工验收或用户 Windows 实机验收。</td><td>CI 已通过：<a href="https://github.com/ankpsx/gulikit-source/actions/runs/44930814800">Run 44930814800</a></td></tr></tbody></table>
 
 ## 3. 尚未解决的问题
 

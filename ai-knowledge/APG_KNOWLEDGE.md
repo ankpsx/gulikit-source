@@ -734,3 +734,78 @@ Implementation implications:
 5. Keep APG parsing and APG serialization as distinct codec operations; do not confuse JSON configuration import with APG binary import.
 
 This section clarifies the product workflow and supersedes any shorthand wording that implies the official web editor only converts a pre-existing JSON file into APG. It does not change the requirement that the local application must support both APG import and APG export.
+
+
+## 18. Official editor UI operation, JSON model, and JSON-to-APG serializer trace (2026-11-21)
+
+### 18.1 UI operation verified from official HTML/JavaScript
+
+The official editor is a two-panel GUI:
+
+- Left panel: dynamically rendered controller/button selection UI, with button controls and left/right stick direction controls. The visible heading is Button Selection / 手柄按键选择.
+- Right panel: Macro Editor / 宏编辑器, which displays the ordered action-step list.
+- The selection panel has an Add To Steps action and a Clear Selection action. Selected buttons and stick directions are staged in the current selection; Add To Steps snapshots them into one macro step.
+- A Delay (ms) input controls the delay associated with a normal step. The default app state observed in source is 200 ms.
+- Add Blank Delay creates a separate step with empty buttons and sticks, a delay value from the blank-delay input (default 200 ms), and isBlankDelay=true.
+- Normal Add To Steps creates a step with copies of selectedButtons and selectedSticks, the current stepDelay, and isBlankDelay=false; after adding, the selection is cleared.
+- The macro list supports visual reordering (drag-and-drop is initialized in the editor) and per-step/list editing controls; Clear List clears the macro list.
+- File Name sets the configuration name. File Management offers Import File, Save File, and Export APG File.
+- The UI source includes PC/Switch ABXY-layout handling. The APG serializer explicitly branches on the active PC vs non-PC mode for A/B/X/Y bit assignments, so the mode is semantically important and must be represented in the local editor.
+
+### 18.2 JSON configuration structure confirmed by source and the repository sample
+
+The official JSON export constructs this top-level object:
+
+- fileName: current file name.
+- macroList: ordered array of action-step objects.
+- version: currently exported as "1.0".
+
+Each normal action-step object contains:
+
+- id: string-like unique step identifier.
+- buttons: array of selected button descriptors. Each descriptor contains id, label, type, and position {row, col}.
+- sticks: array of selected stick-direction descriptors. Each contains stick {id, label, type, position}, direction, and value.
+- delay: delay in milliseconds.
+- isBlankDelay: false.
+
+A blank-delay step contains id, buttons: [], sticks: [], delay, and isBlankDelay: true.
+
+The checked sample macro.json is a concrete example: two ordered steps, first a normal combined input action with 21 button descriptors and 8 stick-direction entries at 100%, delay 200 ms; second an empty blank-delay step at 200 ms. This confirms that a step can represent simultaneous button/stick inputs, not just one key per step.
+
+The official importConfig() uses FileReader.readAsText(), JSON.parse(), and accepts the object when fileName is truthy and macroList is an array. It then replaces appState.fileName and appState.macroList and refreshes the macro list UI. This is JSON import, not APG binary import. The import check is relatively shallow; a robust local application should validate each step and descriptor before accepting it.
+
+### 18.3 JSON save/export and APG export are separate actions from the same in-memory model
+
+- Save File calls exportConfig(). It serializes {fileName, macroList, version:"1.0"} as formatted JSON and downloads a .json file using the current fileName.
+- Export APG File calls exportAPG(), which rejects an empty macroList, calls generateAPGContent(), wraps the returned bytes in an APG Blob, and downloads the APG output.
+- Therefore the official path is GUI action model -> JSON file OR GUI action model -> APG binary. The APG serializer does not first read the downloaded JSON file; both exports consume the same appState.macroList in memory.
+- To implement JSON -> APG locally, the correct pipeline is JSON import -> validate/normalize JSON into the same action-step model -> run the APG serializer -> write binary .apg. It is not a text conversion or renaming operation.
+
+### 18.4 Further serializer facts recovered from generateAPGContent()
+
+The deobfuscated arithmetic and direct source expressions establish:
+
+- The output buffer is 1,048,576 bytes (1 MiB), allocated as Uint8Array.
+- Each generated record is 18 bytes.
+- For each macroList step, the serializer computes a record-repeat count as ceil(delay_ms * 79 / 1000). This explains the sample's 200 ms -> 16 records per step: ceil(200 * 79 / 1000) = 16. This is the source-derived repeat-count rule in the audited script revision; edge cases and compatibility across firmware/editor revisions still need tests.
+- The serializer iterates through each step and emits that step's state repeatedly for the calculated count, subject to output-buffer capacity.
+- The first four 16-bit axis values are written big-endian. The code builds separate X/Y values for left and right sticks from direction/value entries; values are scaled from the JSON percentage value. A missing direction leaves the corresponding neutral/default value.
+- Trigger values are written in dedicated 16-bit fields; LT and RT selection causes the corresponding trigger field to be set to its active value.
+- Button state is encoded into button bitmasks. A/B/X/Y mapping changes with PC vs Switch layout. LB/RB/LT/RT and stick-click/other buttons are handled in the button masks.
+- D-pad direction is encoded as a separate value derived from selected D-pad button IDs.
+- The record also contains a fixed marker field and a rolling counter. The existing sample confirms marker byte 0x02 and counter start 11/increment 14 for that sample; retain these as source/sample-specific facts pending exhaustive tests.
+- The source fills all unused bytes after generated records with 0x67 (the Uint8Array truncation of its arithmetic expression). This conflicts with the existing Auto.apg sample, whose unused tail is 0xFF. Do not silently choose one fill byte: this remains an important source-versus-sample discrepancy requiring investigation, likely involving source revision, export path, or sample provenance.
+
+### 18.5 Local implementation requirements derived from this audit
+
+1. Reproduce the two-panel action editor and staged selection -> Add To Steps workflow.
+2. Support simultaneous buttons and multiple stick directions within one step.
+3. Support normal step delay and independent blank-delay steps.
+4. Preserve order and allow step reordering/editing/deletion and list clearing.
+5. Preserve PC/Switch ABXY layout as an explicit model setting and test both modes.
+6. Implement strict JSON validation and normalization, including IDs, button descriptors, stick descriptors, delay bounds, blank-delay semantics, and version handling.
+7. Implement JSON save/export and APG export as distinct commands over one shared action model.
+8. Implement the source-derived APG record expansion and mapping, but keep the 0x67 vs 0xFF tail conflict unresolved until tested against fresh official exports.
+9. Add golden tests for 200 ms, non-200 ms, blank delay, simultaneous buttons/sticks, PC/Switch ABXY mapping, zero/very short/large delays, buffer capacity, and malformed JSON.
+
+This section records source-level findings from the audited official script_17.js and index.html plus the checked-in Auto.apg/macro.json pair. It does not claim that a complete APG parser or finished local GUI/serializer has already been implemented.

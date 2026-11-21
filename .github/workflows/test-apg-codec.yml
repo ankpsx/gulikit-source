@@ -9,6 +9,7 @@ on:
   pull_request:
     paths:
       - "codec/**"
+      - "editor/**"
       - ".github/workflows/test-apg-codec.yml"
   workflow_dispatch:
 
@@ -21,4 +22,4 @@ jobs:
         with:
           node-version: 22
       - run: node --check editor/app.mjs
-      - run: node --test codec/*.test.mjs
+      - run: node --test codec/*.test.mjs editor/*.test.mjs

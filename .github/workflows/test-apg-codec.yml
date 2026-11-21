@@ -30,9 +30,9 @@ jobs:
       - name: Run browser E2E tests with concise failure output
         shell: bash
         run: |
-          if ! node --test --test-name-pattern="browser step controls" editor/browser-e2e.test.mjs > /tmp/editor-e2e.log 2>&1; then
+          if ! node --test editor/browser-e2e.test.mjs > /tmp/editor-e2e.log 2>&1; then
             tail -n 100 /tmp/editor-e2e.log
             exit 1
           fi
           grep -E '^ok |^# tests|^# pass|^# fail' /tmp/editor-e2e.log
-      - run: node --test codec/*.test.mjs editor/*.test.mjs
+      - run: node --test codec/*.test.mjs editor/editor-smoke.test.mjs

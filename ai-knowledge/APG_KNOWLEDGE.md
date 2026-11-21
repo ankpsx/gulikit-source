@@ -205,7 +205,14 @@ m = Math.round(value * 100 / 2047)
 
 README：<https://github.com/ankpsx/gulikit-source/blob/main/verification/apg-sample-validator/README.md>
 
-目前验证器针对现有双步骤样本，检查文件大小、JSON 步骤结构、记录数、步骤状态重复、空白步骤中性状态、LT/RT 非零字段、按键/D-pad 存在性、marker、counter 序列和尾部一致性。已增加 byte 13 中 R3/L3/START/SELECT/HOME 掩码与 JSON 选择的交叉检查。
+目前样本验证器针对现有双步骤样本，检查文件大小、JSON 步骤结构、记录数、步骤状态重复、空白步骤中性状态、LT/RT 非零字段、按键/D-pad 存在性、marker、counter 序列和尾部一致性；并交叉检查 byte 13 中 R3/L3/START/SELECT/HOME 掩码。
+
+**第一版编码器已进入仓库：**
+- `codec/apg-codec.mjs`：实现 18-byte record encoder、1 MiB 输出、79 records/s 记录数表达式、轴/扳机/按键/D-pad 字段、PC/Switch ABXY 映射及 blank delay。
+- `codec/apg-codec.test.mjs`：Node 内置测试，覆盖 200 ms → 16 records、空白延时中性值、ABXY 布局、trigger/second mask、D-pad/摇杆基本方向、零延时及参数校验。
+- `.github/workflows/test-apg-codec.yml`：新增独立 CI。
+- marker/counter profile 要求调用者显式传入（例如现有样本观察到的 marker=2、counterStart=11、counterStep=14），避免把单一样本规律伪装成通用规范；尾部默认使用当前源码填充表达式折算的 0x67，也允许调用者指定样本填充值。
+- 当前仅是 encoder 初版；尚未实现 APG decoder，也没有声称已与所有官方导出文件逐字节一致。
 
 GitHub Actions：
 - Run #6，ID `44909198922`，针对验证器提交 `d837b8bed88f6949ab9cca9b127372d6cc60929d`，结果 **success**。
@@ -227,9 +234,10 @@ GitHub Actions：
 
 ### 第一阶段：codec 核心
 
-- 建立共享动作模型与 JSON schema/normalize。
-- 实现 18-byte record encoder，先覆盖已验证字段。
-- 实现 APG decoder，未识别字段和原始尾部以 opaque/raw data 保留。
+- 已建立第一版独立 encoder：`codec/apg-codec.mjs`，支持已确认的记录字段、PC/Switch ABXY、基本摇杆方向和 blank delay。
+- 已建立 Node 单元测试与 GitHub Actions 工作流；当前 CI 已有一次成功记录，最近一次修正后的运行仍需确认最终状态。
+- encoder 将 marker/counter 作为显式参数，避免未经证明的通用默认值。
+- 下一步建立共享动作模型与 JSON schema/normalize，并实现 APG decoder；未识别字段和原始尾部以 opaque/raw data 保留。
 - 对未知版本、异常长度、非法记录和不确定尾部发出明确警告。
 - 编码器对尚未验证的 metadata 采用保守策略，不伪造已知性。
 

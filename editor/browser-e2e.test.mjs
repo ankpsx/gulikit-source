@@ -246,7 +246,7 @@ test("browser recognizes the official 29-step JSON and exports a byte-identical 
   await page.locator(".step").nth(28).waitFor();
   assert.equal(await page.locator(".step").count(), 29);
   assert.equal(await page.locator("#layout").inputValue(), "SWITCH");
-  assert.match(await page.locator("#sourceInfo").textContent(), /任意步數/);
+  assert.match(await page.locator("#sourceInfo").textContent(), /不限制步數/);
 
   const downloadPromise = page.waitForEvent("download");
   await page.locator("#exportApg").click();
@@ -278,7 +278,7 @@ test("official 17-step JSON auto-selects its audited profile and exports the exa
   await page.locator(".step").nth(16).waitFor();
   assert.equal(await page.locator(".step").count(), 17);
   assert.equal(await page.locator("#layout").inputValue(), "SWITCH");
-  assert.match(await page.locator("#sourceInfo").textContent(), /任意步數/);
+  assert.match(await page.locator("#sourceInfo").textContent(), /不限制步數/);
   const downloadPromise = page.waitForEvent("download");
   await page.locator("#exportApg").click();
   const download = await downloadPromise;

@@ -80,6 +80,15 @@ console.log("");
 
 const chosen = candidates.sort((a,b) => b.validPrefix-a.validPrefix)[0];
 if (chosen) {
+  const tail = data.subarray(chosen.validPrefix * STRIDE);
+  const tailCounts = new Map();
+  for (const byte of tail) tailCounts.set(byte, (tailCounts.get(byte) ?? 0) + 1);
+  const tailUniform = tailCounts.size === 1;
+  console.log("## Tail byte audit");
+  console.log(`- Tail length after marker/counter prefix: ${tail.length}`);
+  console.log(`- Uniform single-byte tail: ${tailUniform ? "YES" : "NO"}`);
+  console.log(`- Tail byte histogram: ${[...tailCounts].sort((a,b)=>b[1]-a[1]).slice(0,8).map(([b,n])=>"0x"+b.toString(16).padStart(2,"0")+":"+n).join(", ")}`);
+  console.log("");
   const first = records[0].readUInt16BE(COUNTER_OFFSET);
   const lastIndex = Math.max(0, chosen.validPrefix - 1);
   const last = records[lastIndex].readUInt16BE(COUNTER_OFFSET);

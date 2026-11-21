@@ -60,6 +60,26 @@ test("editable model adapter can opt into automatic record-range detection", () 
 });
 
 
+test("stick values are restored as 0–100 percentages from APG axis offsets", () => {
+  const cases = [
+    ["RIGHT", 25], ["RIGHT", 50], ["RIGHT", 75], ["RIGHT", 100],
+    ["LEFT", 25], ["LEFT", 50], ["LEFT", 75], ["LEFT", 100],
+  ];
+  for (const [direction, percentage] of cases) {
+    const bytes = new Uint8Array(18);
+    const delta = Math.round(percentage * 2047 / 100);
+    const raw = direction === "RIGHT" ? 2048 + delta : 2048 - delta;
+    bytes[0] = (raw >> 8) & 0xff;
+    bytes[1] = raw & 0xff;
+    bytes[15] = 2;
+    bytes[17] = 11;
+    const result = apgToEditableModel(bytes, { recordCount: 1, abxyLayout: "PC" });
+    const stick = result.config.macroList[0].sticks[0];
+    assert.equal(stick.direction, direction);
+    assert.ok(Math.abs(stick.value - percentage) <= 0.03, direction + " " + percentage + "% restored as " + stick.value);
+  }
+});
+
 test("all eight D-pad directions export official arrow labels and positions", () => {
   const directions = [
     ["D_UP", "↑", 0, 2],

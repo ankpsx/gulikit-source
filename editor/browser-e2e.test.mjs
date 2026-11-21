@@ -72,7 +72,7 @@ test("browser editor imports, edits, exports JSON and encodes APG", async t => {
     const steps = el.querySelector(".step-list-panel").getBoundingClientRect();
     return { editorLeft: editor.left, editorRight: editor.right, stepsLeft: steps.left, stepsRight: steps.right, columns: getComputedStyle(el).gridTemplateColumns };
   });
-  if (window.innerWidth > 1100) {
+  if (page.viewportSize().width > 1100) {
     assert.ok(workspace.editorLeft < workspace.stepsLeft, "the shared controller editor must be positioned to the left of the step list");
     assert.ok(workspace.editorRight <= workspace.stepsRight, "the step list must occupy the right-hand column");
     assert.equal(workspace.columns.split(" ").length, 2, "desktop workspace must use two columns");

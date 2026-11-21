@@ -193,3 +193,117 @@ export function encodeAPG(config, options = {}) {
     ],
   };
 }
+
+
+const DPAD_BY_VALUE = Object.freeze(Object.fromEntries(
+  Object.entries(DPAD).filter(([key]) => key.startsWith("D_")).map(([key, value]) => [value, key]),
+));
+
+const FIRST_BUTTONS = Object.freeze([
+  ["A", 0x02, 0x01], ["B", 0x01, 0x02],
+  ["X", 0x08, 0x04], ["Y", 0x04, 0x08],
+  ["LB", 0x10, 0x10], ["RB", 0x20, 0x20],
+  ["LT", 0x40, 0x40], ["RT", 0x80, 0x80],
+]);
+
+const SECOND_BUTTONS = Object.freeze([
+  ["R3", 0x01], ["L3", 0x02], ["START", 0x04],
+  ["SELECT", 0x08], ["HOME", 0x10],
+]);
+
+function readU16BE(bytes, offset) {
+  return (bytes[offset] << 8) | bytes[offset + 1];
+}
+
+/**
+ * Low-level, loss-aware APG record parser.
+ *
+ * It intentionally requires recordCount. A 1 MiB APG file has no proven
+ * universal terminator: the sample tail is 0xFF while the audited source's
+ * fill expression resolves to 0x67. Guessing the end of records could eat
+ * valid records or discard opaque data.
+ *
+ * Returns parsed fields plus each exact 18-byte record and the untouched tail.
+ * This is not yet a high-level macro-step reconstruction.
+ */
+export function decodeAPGRecords(input, options = {}) {
+  const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
+  const { recordCount, abxyLayout } = options;
+
+  if (!Number.isInteger(recordCount) || recordCount < 0) {
+    throw new TypeError("recordCount must be supplied as a non-negative integer");
+  }
+  const capacity = Math.floor(bytes.length / APG_RECORD_SIZE);
+  if (recordCount > capacity) {
+    throw new RangeError(`recordCount exceeds file capacity (${capacity})`);
+  }
+  if (abxyLayout !== undefined && abxyLayout !== "PC" && abxyLayout !== "SWITCH") {
+    throw new TypeError('abxyLayout must be "PC" or "SWITCH"');
+  }
+
+  const records = [];
+  const warnings = [];
+  for (let index = 0; index < recordCount; index++) {
+    const offset = index * APG_RECORD_SIZE;
+    const raw = bytes.slice(offset, offset + APG_RECORD_SIZE);
+    const buttonMask1 = raw[12];
+    const buttonMask2 = raw[13];
+    const buttons = [];
+    const faceButtonCandidates = [];
+
+    for (const [id, pcMask, switchMask] of FIRST_BUTTONS) {
+      const pcActive = (buttonMask1 & pcMask) !== 0;
+      const switchActive = (buttonMask1 & switchMask) !== 0;
+      if (["A", "B", "X", "Y"].includes(id)) {
+        if (abxyLayout === "PC" && pcActive) buttons.push(id);
+        else if (abxyLayout === "SWITCH" && switchActive) buttons.push(id);
+        else if (abxyLayout === undefined && (pcActive || switchActive)) {
+          faceButtonCandidates.push({ id, pcActive, switchActive });
+        }
+      } else if (pcActive) {
+        buttons.push(id);
+      }
+    }
+
+    for (const [id, mask] of SECOND_BUTTONS) {
+      if ((buttonMask2 & mask) !== 0) buttons.push(id);
+    }
+
+    const dpad = raw[14] === 0 ? null : (DPAD_BY_VALUE[raw[14]] ?? null);
+    if (raw[14] !== 0 && dpad === null) {
+      warnings.push(`Record ${index}: unknown D-pad value 0x${raw[14].toString(16).padStart(2, "0")}`);
+    }
+    if (raw[15] !== 0x02) {
+      warnings.push(`Record ${index}: marker is 0x${raw[15].toString(16).padStart(2, "0")}, not sample marker 0x02`);
+    }
+
+    records.push({
+      index,
+      axes: {
+        leftX: readU16BE(raw, 0),
+        leftY: readU16BE(raw, 2),
+        rightX: readU16BE(raw, 4),
+        rightY: readU16BE(raw, 6),
+      },
+      triggers: { LT: readU16BE(raw, 8), RT: readU16BE(raw, 10) },
+      buttonMask1,
+      buttonMask2,
+      buttons,
+      faceButtonCandidates,
+      dpad,
+      marker: raw[15],
+      counter: readU16BE(raw, 16),
+      raw,
+    });
+  }
+
+  const recordBytes = recordCount * APG_RECORD_SIZE;
+  return {
+    recordCount,
+    records,
+    tail: bytes.slice(recordBytes),
+    trailingFragment: bytes.slice(capacity * APG_RECORD_SIZE),
+    warnings,
+    fidelity: "record-level; macro steps and original delays are not reconstructed",
+  };
+}

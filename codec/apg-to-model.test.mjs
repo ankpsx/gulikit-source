@@ -116,3 +116,39 @@ test("all eight D-pad directions export official arrow labels and positions", ()
     });
   }
 });
+
+test("APG import warns that simultaneous directions and original step boundaries are lossy", () => {
+  const encoded = encodeAPG({
+    fileName: "simultaneous-directions",
+    macroList: [
+      {
+        id: "opposite-stick",
+        buttons: [button("D_LEFT"), button("D_RIGHT")],
+        sticks: [
+          { stick: { id: "L_STICK", label: "Left Stick", type: "stick" }, direction: "LEFT", value: 100 },
+          { stick: { id: "L_STICK", label: "Left Stick", type: "stick" }, direction: "RIGHT", value: 100 },
+        ],
+        delay: 200,
+        isBlankDelay: false,
+      },
+      {
+        id: "same-final-state",
+        buttons: [button("D_RIGHT"), button("D_LEFT")],
+        sticks: [
+          { stick: { id: "L_STICK", label: "Left Stick", type: "stick" }, direction: "RIGHT", value: 100 },
+          { stick: { id: "L_STICK", label: "Left Stick", type: "stick" }, direction: "LEFT", value: 100 },
+        ],
+        delay: 200,
+        isBlankDelay: false,
+      },
+    ],
+  }, { metadata, abxyLayout: "PC", fileSize: 1024 });
+  const result = apgToEditableModel(encoded.data, {
+    recordCount: encoded.recordCount,
+    abxyLayout: "PC",
+  });
+  assert.ok(result.warnings.some(warning => /one D-pad direction and one signed value per stick axis/.test(warning)));
+  assert.ok(result.warnings.some(warning => /original JSON step boundaries/.test(warning)));
+  assert.equal(result.config.macroList.length, 1, "adjacent equal APG states collapse into one inferred run");
+  assert.equal(result.config.macroList[0].apgSource.recordCount, 32);
+});

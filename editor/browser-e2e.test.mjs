@@ -63,7 +63,7 @@ test("browser editor imports, edits, exports JSON and encodes APG", async t => {
   await first.locator(".delay").dispatchEvent("change");
   await page.locator("#buttonGrid label").filter({ hasText: /^B$/ }).locator("input").check();
   assert.ok(await page.locator("#buttonGrid .key-b").evaluate(el => el.classList.contains("selected")), "selected button should be highlighted on the shared controller layout");
-  await page.locator(".step").nth(1).locator(".edit-step").click();
+  await page.locator("#addAction").click();
   assert.equal(await page.locator("#buttonGrid .key-b input").isChecked(), false, "switching steps must refresh the shared diagram selection");
   await page.locator(".step").nth(0).locator(".edit-step").click();
   const jsonDownloadPromise = page.waitForEvent("download");

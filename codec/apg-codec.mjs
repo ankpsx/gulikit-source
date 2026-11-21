@@ -13,6 +13,10 @@ export const APG_FILE_SIZE = 1024 * 1024;
 export const APG_RECORD_SIZE = 18;
 export const APG_RECORDS_PER_SECOND_FACTOR = 79;
 
+// Confirmed against the official webpage serializer and two paired official APG exports.
+export const OFFICIAL_APG_METADATA = Object.freeze({ marker: 0x02, counterStart: 11, counterStep: 14 });
+export const OFFICIAL_APG_FILL_BYTE = 0xff;
+
 export const DPAD = Object.freeze({
   NEUTRAL: 0,
   D_UP: 1,
@@ -191,7 +195,7 @@ export function encodeAPG(config, options = {}) {
     requestedRecordCount,
     truncated: requestedRecordCount > recordCapacity,
     warnings: [
-      "Marker/counter values are supplied by the caller; their universal APG rule is not yet proven.",
+      "Official marker/counter defaults are applied; override only for a confirmed alternate firmware/container variant.",
       "The encoder implements verified cardinal stick directions only; diagonal stick entries are ignored, matching the audited serializer switch.",
     ],
   };

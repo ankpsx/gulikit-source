@@ -16,7 +16,7 @@ test("editor contains every required application control", () => {
 });
 
 test("step template exposes all controls queried by the editor", () => {
-  for (const cls of ["step-title", "delay", "blank-note", "convert-action", "controls", "up", "down", "remove", "button-grid", "stick-grid", "source-meta"]) {
+  for (const cls of ["step-title", "delay", "blank-note", "convert-action", "edit-step", "up", "down", "remove", "source-meta"]) {
     assert.ok(html.includes(cls), `missing template class: ${cls}`);
     assert.ok(app.includes(`".${cls}"`), `app does not query template class: ${cls}`);
   }
@@ -39,6 +39,10 @@ test("editor is Simplified Chinese, local-first and responsive", () => {
   assert.ok(css.includes("@media(max-width:560px)"));
   assert.ok(css.includes("grid-template-columns:minmax(0,1fr)"), "steps must stay in one vertical column");
   assert.ok(css.includes("grid-template-areas:"), "button choices must use a controller-like physical layout");
-  assert.ok(html.includes("手柄按键布局") && html.includes("手柄按键选择"), "controller diagram must be clearly labeled");
+  assert.ok(html.includes("Switch Pro 手柄按键布局") && html.includes("Switch Pro 手柄按键选择"), "Switch Pro controller diagram must be clearly labeled");
+  assert.equal((html.match(/class="button-grid"/g) ?? []).length, 1, "exactly one shared controller diagram must exist in the page");
+  assert.ok(html.includes('id="buttonGrid"') && html.includes('id="stickGrid"'), "shared controller and stick editor targets must exist");
+  assert.ok(app.includes("activeStepId") && app.includes('$("buttonGrid")'), "controller diagram must follow the selected step");
+  assert.ok(css.includes("grid-template-areas:"), "controller buttons must follow a physical Switch Pro layout");
   assert.ok(app.includes("l.classList.toggle(\"selected\",c.checked)"), "selected controller buttons must be visibly highlighted");
 });

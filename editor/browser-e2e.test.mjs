@@ -174,7 +174,7 @@ test("editing one imported APG run preserves the untouched run and relocates the
   const download = await downloadPromise;
   const rebuilt = await readFile(await download.path());
   const recordSize = 18;
-  assert.deepEqual(rebuilt.subarray(20 * recordSize, 36 * recordSize), Buffer.from(original).subarray(16 * recordSize, 32 * recordSize));
-  assert.deepEqual(rebuilt.subarray(36 * recordSize), Buffer.from(original).subarray(32 * recordSize));
+  assert.equal(Buffer.compare(rebuilt.subarray(20 * recordSize, 36 * recordSize), Buffer.from(original).subarray(16 * recordSize, 32 * recordSize)), 0, "untouched APG run bytes changed");
+  assert.equal(Buffer.compare(rebuilt.subarray(36 * recordSize), Buffer.from(original).subarray(32 * recordSize)), 0, "original suffix was not relocated byte-for-byte");
   assert.match(await page.locator("#status").textContent(), /原始保留 1 步；重新編碼 1 步/);
 });

@@ -73,7 +73,7 @@
 | 50 | 29 步配对样本：ABXY | A/B/X/Y 的 byte 12 值分别为 0x01/0x02/0x04/0x08，与 Switch 布局一致。 | 官方配对样本确认 |
 | 51 | APG 容器尾部 | 官方 serializer 将有效记录区之后的全部字节填为 0xFF，直至 1 MiB 容器结束。 | 官方源码确认；17/29 步配对样本均一致 |
 | 52 | 样本 profile | 17/29 步精确动作签名 profile 仅保留作历史样本审计测试；正式编辑器导出不再调用 profile 检测，也不以步数或动作签名作为导出条件。 | 当前 app.mjs 不导入 profile 模块；本地代码检查 |
-| 53 | JSON→APG 配对导出（本地自动化） | 17/29 步官方 JSON 通过通用 encoder 导出，并与配对官方 APG 做逐字节比较；等待本轮 GitHub Actions 最终结果。 | 新增通用导出 E2E；CI 状态以最新 Run 为准 |
+| 53 | JSON→APG 配对导出（本地自动化） | 17/29 步官方 JSON 通过通用 encoder 导出，并与配对官方 APG 逐字节一致；37 步任意步数 JSON 的浏览器导出成功。 | GitHub Actions Run 44938706631：Chromium E2E 7/7、Node tests 60/60；仅证明本地自动化，不等于官方网页人工验收 |
 | 54 | 任意步数导出 | JSON 导出路径不检查固定步数、不要求动作签名匹配；每一步直接按自身 delay 和动作状态生成记录。 | editor/app.mjs 与 codec/apg-codec.mjs 当前实现；CI 待确认 |
 | 55 | 本地动作模型 | codec/action-model.mjs 统一普通步骤、空白延时、JSON normalize、逐步延时更新和 JSON 导出；默认新步骤 200 ms，导入 delay 不应被静默重置，未知 JSON 字段应保留。 | 本地实现与测试 |
 | 56 | APG Encoder/Decoder | codec/apg-codec.mjs 实现 18-byte 编码、1 MiB 容器、摇杆/扳机/按键/D-pad、PC/Switch 布局；默认自动采用官方 Marker=0x02、Counter 起点=11/步进=14、尾部 0xFF，并允许显式覆盖供特殊变体测试。 | 官方 serializer 源码与两组配对样本；本地实现 |

@@ -183,3 +183,39 @@ test("editing one imported APG run preserves the untouched run and relocates the
   assert.equal(Buffer.compare(relocatedSuffix, originalSuffixPrefix), 0, "retained suffix prefix was not relocated byte-for-byte");
   assert.match(await page.locator("#status").textContent(), /原始保留 1 步；重新編碼 1 步/);
 });
+
+
+test("browser recognizes the official 29-step JSON and exports a byte-identical paired APG", async t => {
+  const { chromium } = await import("playwright");
+  const { server, url } = await startServer();
+  const browser = await chromium.launch({ headless: true });
+  t.after(async () => { await browser.close(); await new Promise(r => server.close(r)); });
+  const jsonBytes = await readFile(resolve(root, "verification/apg-sample-validator/Official.29steps.json"));
+  const officialApg = await readFile(resolve(root, "verification/apg-sample-validator/Official.29steps.apg"));
+  const page = await browser.newPage({ acceptDownloads: true });
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto(url);
+  await page.locator("#jsonFile").setInputFiles({
+    name: "Official.29steps.json",
+    mimeType: "application/json",
+    buffer: jsonBytes
+  });
+
+  await page.locator(".step").nth(28).waitFor();
+  assert.equal(await page.locator(".step").count(), 29);
+  assert.equal(await page.locator("#marker").inputValue(), "2");
+  assert.equal(await page.locator("#counterStart").inputValue(), "11");
+  assert.equal(await page.locator("#counterStep").inputValue(), "14");
+  assert.equal(await page.locator("#layout").inputValue(), "SWITCH");
+  assert.match(await page.locator("#sourceInfo").textContent(), /464 條連續記錄/);
+
+  const downloadPromise = page.waitForEvent("download");
+  await page.locator("#exportApg").click();
+  const download = await downloadPromise;
+  const exported = await readFile(await download.path());
+  assert.equal(exported.length, 1024 * 1024);
+  assert.deepEqual(exported, officialApg, "exported APG should match the paired official binary byte-for-byte");
+  assert.match(await page.locator("#status").textContent(), /APG 匯出完成/);
+  assert.deepEqual(errors, []);
+});

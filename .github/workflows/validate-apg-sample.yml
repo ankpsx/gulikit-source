@@ -22,13 +22,12 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Confirm sample file exists
-        run: |
-          test -f verification/apg-sample-validator/Auto.apg || {
-            echo "::error::Auto.apg is missing. Add the original sample to verification/apg-sample-validator/Auto.apg."
-            exit 1
-          }
-
-      - name: Validate Auto.apg binary sample
+      - name: Confirm both sample files exist
         working-directory: verification/apg-sample-validator
-        run: node verify-apg.mjs Auto.apg
+        run: |
+          test -f Auto.apg
+          test -f macro.json
+
+      - name: Cross-check APG binary against JSON export
+        working-directory: verification/apg-sample-validator
+        run: node verify-apg.mjs Auto.apg macro.json

@@ -873,3 +873,4 @@ CI Artifact 名称：\`GuliKit-APG-Editor-Windows-x64\`，保留 14 天。
 - 当前步骤切换时，左侧共享手柄图同步当前步骤；不得在每张步骤卡片内复制手柄图。
 - 窄屏/窗口较窄时允许退化为上下布局，避免横向溢出。
 - E2E 应在桌面视口断言编辑区在左、步骤面板在右，并继续断言手柄图唯一、步骤列表单列。
+- Playwright 测试代码运行在 Node.js 环境，不能直接读取浏览器全局变量 `window`；视口宽度必须通过 `page.viewportSize().width` 获取。浏览器 DOM 的 `window`/`document` 只可在 `page.evaluate()` 回调内部访问。

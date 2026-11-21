@@ -216,8 +216,8 @@ README：<https://github.com/ankpsx/gulikit-source/blob/main/verification/apg-sa
 - 当前已有 encoder 与低级 record parser；尚未实现自动记录边界识别、宏步骤分组/延时恢复和完整的 APG → JSON 高层 decoder，也没有声称已与所有官方导出文件逐字节一致。
 
 GitHub Actions：
-- Run #6，ID `44909198922`，针对验证器提交 `d837b8bed88f6949ab9cca9b127372d6cc60929d`，结果 **success**。
-- [查看运行记录](https://github.com/ankpsx/gulikit-source/actions/runs/44909198922)
+- 样本验证器 Run #6，ID `44909198922`，结果 **success**；[查看记录](https://github.com/ankpsx/gulikit-source/actions/runs/44909198922)。
+- codec Run #4，ID `44910219382`，提交 `120f5f4faab9dbf809d47d11719b5fc17cdc7e03`，9 项测试全部通过（9 pass / 0 fail）；[查看记录](https://github.com/ankpsx/gulikit-source/actions/runs/44910219382)。
 
 这只是现有样本的交叉验证，不等于完整 APG codec 已实现，也不代表全部字节映射均已通过独立生成样本验证。
 
@@ -227,7 +227,7 @@ GitHub Actions：
 2. **摇杆输入**：value 缺失、0、100、负数、浮点、超范围值的精确结果；斜向方向的 serializer 行为。
 3. **记录元数据**：marker 与 counter 的完整规则、计数回绕和不同导出文件间是否变化。
 4. **尾部数据**：源码 0x67 与样本 0xFF 的差异来源；是否与网页版本、导出路径或样本版本有关。
-5. **APG 解码**：记录边界、有效记录终止、尾部填充识别、未知字段保留、损坏文件处理。
+5. **APG 解码**：低级 18-byte record parser 已实现；自动记录边界识别、有效记录终止、宏步骤分组/延时恢复、未知字段保留策略和损坏文件处理仍待完成。
 6. **ABXY 布局**：PC/alternate 映射已见源码分支；需通过不同布局导出样本交叉验证。
 7. **额外官方来源**：尚未发现可确认的官方 APG 二进制导入器；网页 JSON Import 不可当作 APG parser。
 
@@ -236,7 +236,7 @@ GitHub Actions：
 ### 第一阶段：codec 核心
 
 - 已建立第一版独立 encoder：`codec/apg-codec.mjs`，支持已确认的记录字段、PC/Switch ABXY、基本摇杆方向和 blank delay。
-- 已建立 Node 单元测试与 GitHub Actions 工作流；当前 CI 已有一次成功记录，最近一次修正后的运行仍需确认最终状态。
+- 已建立 Node 单元测试与 GitHub Actions 工作流；最新 Run #4（ID `44910219382`）9 项测试全部通过（9 pass / 0 fail）。
 - encoder 将 marker/counter 作为显式参数，避免未经证明的通用默认值。
 - 已实现低级 APG record parser，但 recordCount 仍需显式提供；下一步研究安全的记录边界检测，再实现动作状态分组、JSON normalize 与高层 APG → 可编辑模型转换。
 - decoder 必须继续保留每条原始记录和文件尾部；未知 marker/D-pad/布局应产生警告或候选解释，而不是静默修复。

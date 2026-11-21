@@ -113,3 +113,68 @@ test("browser APG import and unchanged export preserve every byte", async t => {
   assert.deepEqual(rebuilt, Buffer.from(original));
   assert.deepEqual(errors, []);
 });
+
+
+test("browser step controls support defaults, independent delay, reorder and blank conversion", async t => {
+  const { chromium } = await import("playwright");
+  const { server, url } = await startServer();
+  const browser = await chromium.launch({ headless: true });
+  t.after(async () => { await browser.close(); await new Promise(r => server.close(r)); });
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.goto(url);
+  await page.locator("#newConfig").click();
+  await page.locator("#addAction").click();
+  await page.locator("#addBlank").click();
+  await page.locator("#addAction").click();
+  assert.equal(await page.locator(".step").count(), 3);
+  assert.deepEqual(await page.locator(".delay").evaluateAll(nodes => nodes.map(n => Number(n.value))), [200, 200, 200]);
+  await page.locator(".step").nth(1).locator(".delay").fill("420");
+  await page.locator(".step").nth(1).locator(".delay").dispatchEvent("change");
+  await page.locator(".step").nth(0).locator(".down").click();
+  assert.match(await page.locator(".step").nth(0).locator(".step-title").textContent(), /空白延時/);
+  assert.equal(await page.locator(".step").nth(0).locator(".delay").inputValue(), "420");
+  await page.locator(".step").nth(0).locator(".convert-action").click();
+  assert.equal(await page.locator(".step").nth(0).locator(".controls").isVisible(), true);
+  await page.locator(".step").nth(1).locator(".remove").click();
+  assert.equal(await page.locator(".step").count(), 2);
+  const downloadPromise = page.waitForEvent("download");
+  await page.locator("#exportJson").click();
+  const download = await downloadPromise;
+  const exported = JSON.parse(await readFile(await download.path(), "utf8"));
+  assert.equal(exported.macroList.length, 2);
+  assert.equal(exported.macroList[0].delay, 420);
+  assert.equal(exported.macroList[0].isBlankDelay, false);
+});
+
+test("editing one imported APG run preserves the untouched run and relocates the suffix", async t => {
+  const { chromium } = await import("playwright");
+  const { server, url } = await startServer();
+  const browser = await chromium.launch({ headless: true });
+  t.after(async () => { await browser.close(); await new Promise(r => server.close(r)); });
+  const original = encodeAPG({
+    fileName: "partial-edit",
+    version: "1.0",
+    macroList: [
+      { id: "a", buttons: [{ id: "A" }], sticks: [], delay: 200, isBlankDelay: false },
+      { id: "blank", buttons: [], sticks: [], delay: 200, isBlankDelay: true }
+    ]
+  }, { abxyLayout: "PC", metadata: { marker: 2, counterStart: 11, counterStep: 14 }, fillByte: 0xff }).data;
+  const page = await browser.newPage({ acceptDownloads: true });
+  await page.goto(url);
+  await page.locator("#apgFile").setInputFiles({
+    name: "partial-edit.apg",
+    mimeType: "application/octet-stream",
+    buffer: Buffer.from(original)
+  });
+  await page.locator(".step").nth(1).waitFor();
+  await page.locator(".step").nth(0).locator(".delay").fill("250");
+  await page.locator(".step").nth(0).locator(".delay").dispatchEvent("change");
+  const downloadPromise = page.waitForEvent("download");
+  await page.locator("#exportApg").click();
+  const download = await downloadPromise;
+  const rebuilt = await readFile(await download.path());
+  const recordSize = 18;
+  assert.deepEqual(rebuilt.subarray(20 * recordSize, 36 * recordSize), Buffer.from(original).subarray(16 * recordSize, 32 * recordSize));
+  assert.deepEqual(rebuilt.subarray(36 * recordSize), Buffer.from(original).subarray(32 * recordSize));
+  assert.match(await page.locator("#status").textContent(), /原始保留 1 步；重新編碼 1 步/);
+});

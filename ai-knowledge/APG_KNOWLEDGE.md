@@ -85,10 +85,10 @@
 | 样本 | 尾部填充差异 | 当前审计源码尾部表达式折算为 5991，写入 Uint8Array 截断为 0x67；样本未使用区为 0xFF。 | 源码表达式已确认、样本值已观察；两者差异原因待验证 |
 | 本地实现 | 共享动作模型 | codec/action-model.mjs 提供普通步骤/空白延时创建、JSON normalize、逐步骤延时更新和 JSON 导出；新步骤默认 200 ms，导入步骤不自动重置 delay，未知 JSON 字段保留。 | 实现已提交；https://github.com/ankpsx/gulikit-source/blob/main/codec/action-model.mjs |\n| 本地实现 | Encoder | codec/apg-codec.mjs 已实现 18-byte record encoder、1 MiB 输出、79/s 记录数表达式、轴/trigger/button/D-pad、PC/Switch ABXY 和 blank delay。 | 实现已提交；https://github.com/ankpsx/gulikit-source/blob/main/codec/apg-codec.mjs |
 | 本地实现 | Decoder 第一层 | decodeAPGRecords() 要求显式传入 recordCount；解析 axes/triggers/masks/D-pad/marker/counter，保留每条原始记录、原始尾部和不足 18 bytes 的 fragment。 | 实现已提交；不是高层宏步骤 decoder |
-| 本地实现 | Decoder 状态分组 | decodeAPGSteps() 将相邻且前 15 bytes 控制状态完全相同的记录合并为候选 run；排除 marker/counter，保留原始记录。相同状态的相邻原始步骤无法区分。 | 实现已提交；仅推断状态 run，不声称精确恢复步骤边界 |
+| 本地实现 | Decoder 状态分组 | decodeAPGSteps() 将相邻且前 15 bytes 控制状态完全相同的记录合并为候选 run；排除 marker/counter，保留原始记录。相同状态的相邻原始步骤无法区分。 | 实现已提交；仅推断状态 run，不声称精确恢复步骤边界 |\n| 本地实现 | APG → 动作模型适配 | codec/apg-to-model.mjs 将解码 run 转为 JSON 形状的可编辑 macroList；需要显式指定 recordCount 与 PC/SWITCH 布局；每步附加 apgSource，保留记录范围、原始记录 hex、marker/counter 与可行 delay 范围。 | 已提交；推断模型，不是无损恢复 |\n| 本地实现 | APG 延时推断 | 若延时范围唯一则采用唯一值；若范围有多个整数值，默认优先选范围内 200 ms，否则选最小值；允许 preferredDelayMs 覆盖。原始可能范围始终保存在 apgSource.possibleDelayMs。 | 已提交；UI 必须明确显示“推断值” |\n| 本地实现 | APG 摇杆反推 | 从 2048 中性轴值推断基本方向；通过已知 round(value×100/2047) 公式反算近似 value，并保留 rawRecordsHex。原始 UI value 不能保证精确恢复。 | 已提交；近似反推，需 UI 警告 |
 | 本地实现 | ABXY 未指定 | 未指定布局时不猜测，返回 face-button 候选解释。 | 实现已提交 |
 | 本地实现 | Metadata 策略 | Encoder 要求调用者显式传入 marker/counter profile，避免把单一样本规律伪装成通用规则。 | 实现策略已提交 |
-| 本地测试 | 测试覆盖 | APG codec Node 测试覆盖 200 ms→16 records、blank neutral、ABXY、trigger/second mask、D-pad/摇杆基本方向、零延时、参数校验、raw record/tail 保留、ABXY 未指定、metadata、状态分组及延时范围反推。 | CI 已验证 14 pass / 0 fail |\n| 本地测试 | 动作模型与 JSON | 新增测试覆盖普通/空白步骤默认 200 ms、逐步骤修改延时、导入描述符和未知字段保留、JSON 导出 version=1.0、无效 delay/descriptor 拒绝。与 APG codec 合并运行共 19 项测试全部通过。 | CI Run 44911340732；19 pass / 0 fail |
+| 本地测试 | 测试覆盖 | APG codec Node 测试覆盖 200 ms→16 records、blank neutral、ABXY、trigger/second mask、D-pad/摇杆基本方向、零延时、参数校验、raw record/tail 保留、ABXY 未指定、metadata、状态分组及延时范围反推。 | CI 已验证 14 pass / 0 fail |\n| 本地测试 | 动作模型与 JSON | 新增测试覆盖普通/空白步骤默认 200 ms、逐步骤修改延时、导入描述符和未知字段保留、JSON 导出 version=1.0、无效 delay/descriptor 拒绝。 | CI Run 44911340732；19 pass / 0 fail |\n| 本地测试 | APG → 动作模型 | 新增测试覆盖普通动作恢复、空白延时恢复、原始记录保留、200 ms 延时范围和布局必填、用户覆盖推断延时。 | 新增 3 项；等待 CI 结果 |
 | 本地测试 | 摇杆边界测试 | 新增缺失值、null、负数、小数、正向值及超 16-bit 轴值测试；这些测试验证本地 encoder 的 JS 算术/字节写入行为，不等于已取得官方硬件边界样本。 | 本地实现/CI 已验证 |
 | 本地测试 | 延时与容量边界 | 新增负延时无记录、超出小型测试缓冲区时记录截断并返回 truncated 标志的测试。 | 本地实现/CI 已验证 |
 | 本地测试 | 最新 CI | Run ID 44910981951，14 项测试全部通过。 | https://github.com/ankpsx/gulikit-source/actions/runs/44910883435 |
@@ -110,7 +110,7 @@
 
 - **已完成第一版**：APG encoder、低级 18-byte record parser、Node 单元测试、GitHub Actions。
 - **已完成初步状态分组**：decodeAPGSteps() 输出相邻同状态 run，并给出可成立的整数毫秒延时范围；相邻同状态步骤仍不可区分。
-- **正在推进**：记录终止范围识别、JSON normalize、APG → 可编辑动作模型。
+- **已完成第一版**：JSON normalize、APG → 可编辑动作模型适配（带原始记录和推断警告）。\n- **正在推进**：记录终止范围识别、真实 APG 样本自动识别、编辑后 APG 重编码与字节保留策略。
 - **后续**：完整 JSON ↔ APG 语义往返；GUI 步骤编辑、拖动排序、延时编辑；离线 Windows EXE。
 - **验收原则**：必须用独立 APG 样本验证映射；完成 APG → 编辑 → APG 往返；未知字节/尾部不得丢失；所有尚未证明的元数据均应提示用户或保留原值。
 

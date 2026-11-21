@@ -4,12 +4,12 @@
 
 - 产品：GuliKit APG Editor 0.1.0
 - 平台：Windows x64
-- 构建工作流：[Windows desktop installer — Run 44942886837](https://github.com/ankpsx/gulikit-source/actions/runs/44942886837)
+- 构建工作流：[Windows desktop installer — Run 44945325222](https://github.com/ankpsx/gulikit-source/actions/runs/44942886837)
 - Artifact 名称：\`GuliKit-APG-Editor-Windows-x64\`
-- Artifact ID：\`14722920216\`
-- ZIP 大小：111,388,357 bytes
-- ZIP SHA-256：\`7c66fb0294721a4c91afd08a51b24afe0beb0b9c17c4d88240c2cfa131ca747f\`
-- Artifact 到期时间：2026-12-05 19:49:55 UTC
+- Artifact ID：\`14723510743\`
+- ZIP 大小：111,390,325 bytes
+- ZIP SHA-256：\`ed75a6fedaf6d62f9dfe4413f89af6124575ef23787de0927d53c204a8c7ee32\`
+- Artifact 到期时间：2026-12-05 20:17:09 UTC
 
 ### 下载步骤
 

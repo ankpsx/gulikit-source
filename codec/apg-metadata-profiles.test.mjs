@@ -58,11 +58,7 @@ test("recognizes the exact 17-step official JSON and exports its paired APG byte
 
   const { encodeAPG } = await import("./apg-codec.mjs");
   const expected = await readFile(sample17ApgPath);
-  const actual = encodeAPG(config, {
-    metadata: profile.metadata,
-    abxyLayout: profile.abxyLayout,
-    fillByte: profile.fillByte,
-  }).data;
+  const actual = encodeAPG(config, { abxyLayout: "SWITCH" }).data;
   assert.deepEqual(Buffer.from(actual), expected);
 });
 

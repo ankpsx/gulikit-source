@@ -1,0 +1,24 @@
+name: Inspect official 17-step APG pair
+
+on:
+  push:
+    paths:
+      - "verification/apg-sample-validator/Official.17steps.apg"
+      - "verification/apg-sample-validator/Official.17steps.json"
+      - "verification/apg-sample-validator/inspect-17steps-apg.mjs"
+      - ".github/workflows/inspect-17steps-apg.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-official-17steps-apg:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Inspect exact official 17-step APG binary against companion JSON
+        working-directory: verification/apg-sample-validator
+        run: node inspect-17steps-apg.mjs Official.17steps.apg Official.17steps.json

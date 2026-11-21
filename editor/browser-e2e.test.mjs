@@ -182,6 +182,50 @@ test("editing one imported APG run preserves the untouched run and relocates the
 });
 
 
+test("browser exports an arbitrary 37-step JSON without a sample profile", async t => {
+  const { chromium } = await import("playwright");
+  const { server, url } = await startServer();
+  const browser = await chromium.launch({ headless: true });
+  t.after(async () => { await browser.close(); await new Promise(r => server.close(r)); });
+  const config = {
+    fileName: "arbitrary-37",
+    version: "1.0",
+    macroList: Array.from({ length: 37 }, (_, index) => ({
+      id: "step-" + index,
+      buttons: [{ id: index % 2 ? "B" : "A" }],
+      sticks: [],
+      delay: 200 + (index % 3) * 13,
+      isBlankDelay: false,
+    })),
+  };
+  const page = await browser.newPage({ acceptDownloads: true });
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto(url);
+  await page.locator("#jsonFile").setInputFiles({
+    name: "arbitrary-37.json",
+    mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(config)),
+  });
+  await page.locator(".step").nth(36).waitFor();
+  assert.equal(await page.locator(".step").count(), 37);
+  assert.equal(await page.locator("#layout").inputValue(), "SWITCH");
+  const downloadPromise = page.waitForEvent("download");
+  await page.locator("#exportApg").click();
+  const download = await downloadPromise;
+  const bytes = await readFile(await download.path());
+  const expectedRecords = config.macroList.reduce((sum, step) =>
+    sum + Math.ceil(step.delay * 79 / 1000), 0);
+  assert.equal(bytes.length, 1024 * 1024);
+  assert.equal(bytes[15], 0x02);
+  assert.equal((bytes[16] << 8) | bytes[17], 11);
+  assert.equal((bytes[(expectedRecords - 1) * 18 + 16] << 8) |
+    bytes[(expectedRecords - 1) * 18 + 17],
+  (11 + (expectedRecords - 1) * 14) & 0xffff);
+  assert.ok(bytes.subarray(expectedRecords * 18).every(byte => byte === 0xff));
+  assert.deepEqual(errors, []);
+});
+
 test("browser recognizes the official 29-step JSON and exports a byte-identical paired APG", async t => {
   const { chromium } = await import("playwright");
   const { server, url } = await startServer();

@@ -1,158 +1,202 @@
-# GuliKit APG：唯一技术知识库
+# GuliKit APG Editor — 技术知识库（唯一有效版本）
 
-> 本文件是 GuliKit APG Editor 项目的唯一技术知识库。本文只记录当前有效、可复核的结论；已经证实错误或已被新证据推翻的旧说法不保留为参考规则。知识修订以当前事实为准，历史变更由 Git commit 记录。
+> 用途：让后续开发会话直接依据已验证事实继续工作。本文只保留当前有效规则、证据边界、已知限制和下一步验收事项。旧的编号式追加记录、重复结论、过期 CI 编号和已被推翻的说法已从正文清理；历史变更以 Git commit 为准。
 
-## 1. 项目目标与证据规则
+## 0. 先读这里：不可违反的项目规则
 
-项目目标：构建 Windows 本地离线 GuliKit APG 编辑器，支持 JSON/APG 导入、动作步骤编辑、JSON/APG 导出、保留未修改 APG 原始记录，并通过自动化测试和真实环境验收。
+1. **JSON → APG 必须通用。** 官方 JSON 有多少步骤就按其步骤顺序、动作状态和每步 delay 生成 APG；不得要求恰好 17/29 步，不得用样本 profile 作为导出门槛。
+2. **不要把 APG → JSON 说成无损。** APG 无法完整表达 JSON 的所有同时方向、原始步骤边界和精确毫秒延时。反向导入必须提示有损和推断性质。
+3. **保留原始数据。** 对未修改的 APG 来源记录应尽量逐字节保留；未知字段、尾部和不能确认的片段不得擅自清除。无法可靠识别记录范围时要警告，不要猜测。
+4. **区分布局。** 官方 JSON 不包含 ABXY 的 PC/Switch 布局设置。当前编辑器默认 Switch（与已配对官方样本相符），但必须保留 PC/Switch 切换；不得声称能从 JSON 自动识别。
+5. **证据分级。** 源码分析、配对样本字节比较、Node 测试、浏览器 E2E、官方网页人工验收、Windows 用户电脑验收、控制器硬件回放是不同层级，不得互相替代。
+6. 当前程序**不支持通过 USB 或 Bluetooth 将宏写入控制器**，不得暗示已支持。
 
-证据等级必须严格区分：
+## 1. 项目范围与文件职责
 
-- **官方源码确认**：从官方网页脚本定位到明确的结构、字段、条件或运算。
-- **官方配对样本确认**：在仓库中配套的官方 JSON 与 APG 二进制文件中交叉核对。
-- **本地测试通过**：本地代码在自动化测试中通过；不等于官方网页或真实控制器验收。
-- **Chromium 浏览器 E2E 通过**：在本项目本地网页编辑器中通过真实浏览器自动化；不等于官方网页验收。
-- **Windows 构建通过**：GitHub Windows runner 成功生成安装包；不等于用户电脑已安装、启动。
-- **待验证**：证据不足，不能作为程序默认规则。
+项目是 Windows 本地离线 GuliKit APG 编辑器，包含网页编辑器与 Electron 桌面封装，支持 JSON/APG 导入、步骤编辑、JSON/APG 导出，以及 APG 来源数据保留和编辑重建。
 
-不得把单一样本结论推广成所有 APG 文件的通用规则；不得把推断的步骤边界或延时称为无损恢复。
+| 文件 | 职责 |
+|---|---|
+| `codec/action-model.mjs` | 统一动作模型、JSON normalize/export、步骤与延时处理 |
+| `codec/apg-codec.mjs` | APG 低级 encoder/decoder，18-byte 记录与字段编解码 |
+| `codec/apg-to-model.mjs` | APG 记录 run 转为可编辑模型；恢复方向/力度并给出有损警告 |
+| `codec/apg-range-detect.mjs` | 候选有效记录范围的启发式检测 |
+| `codec/apg-rebuild.mjs` | 来源记录区段与生成记录的组合重建 |
+| `codec/apg-edit-rebuild.mjs` | 根据 APG provenance/baseline 规划编辑重建 |
+| `codec/apg-record-patcher.mjs` | 固定记录布局下修补指定记录，不改变记录数 |
+| `codec/apg-metadata-profiles.mjs` | 历史样本签名审计工具；**不是**通用 JSON→APG 导出的条件或门槛 |
+| `editor/` | 离线网页编辑器、浏览器 E2E 与 smoke tests |
+| `desktop/` | Electron 桌面封装 |
+| `verification/apg-sample-validator/` | 官方 JSON/APG 配对样本及审计脚本 |
 
-## 2. 已确认技术事实总表
+## 2. 官方 JSON 模型
 
-| 序号 | 分类 | 当前有效结论 | 证据与适用范围 |
-|---:|---|---|---|
-| 1 | 官方 GUI：动作步骤 | 宏由有序步骤列表组成；一个步骤可同时包含多个 buttons 和多个 sticks，不是一条按键必然对应一个步骤。 | 官方源码确认 |
-| 2 | 官方 GUI：普通延时 | 普通步骤的 delay 单位为毫秒；当前官方网页默认值为 200 ms。每步延时保存在步骤对象中。 | 官方源码确认；默认值属于当前网页版本 |
-| 3 | 官方 GUI：空白延时 | 空白延时是独立步骤，buttons/sticks 为空，isBlankDelay=true；与普通动作步骤分开保存延时。 | 官方源码确认 |
-| 4 | 官方 GUI：编辑 | 网页支持选择动作、添加步骤、添加空白延时、清空选择/列表、步骤排序，以及修改每步延时。 | 官方源码确认 |
-| 5 | 官方 GUI：布局 | ABXY 有 PC 与 Switch 两种布局；两种布局的 A/B/X/Y 位掩码不同。 | 官方源码确认；29 步配对样本验证 Switch 布局 |
-| 6 | 官方 JSON：顶层结构 | 主要字段为 fileName、macroList、version；官方导出 version 为字符串 "1.0"。 | 官方源码与样本确认 |
-| 7 | 官方 JSON：普通步骤 | 包含 id、buttons、sticks、delay、isBlankDelay:false。 | 官方源码与样本确认 |
-| 8 | 官方 JSON：按键描述符 | 按键描述符包含 id、label、type、position:{row,col}；具体 label/position 依动作类型而定。 | 官方源码与样本确认 |
-| 9 | 官方 JSON：摇杆描述符 | 摇杆项包含嵌套 stick 描述、direction、value；本项目界面将 value 作为 0–100 的力度百分比编辑。 | 官方样本及本地编辑模型确认 |
-| 10 | 官方 JSON：空白延时 | 空白步骤包含空 buttons/sticks、delay 与 isBlankDelay:true。 | 官方源码与样本确认 |
-| 11 | 官方 JSON 导入 | 官方网页 Import File 使用文本读取和 JSON.parse；这是 JSON 导入，不是 APG 二进制解析。 | 官方源码确认 |
-| 12 | 官方 APG 导出 | 官方网页从内存中的 macroList 直接生成 APG；不是先下载 JSON 再转换。 | 官方源码确认 |
-| 13 | APG 容器 | 当前官方 serializer 输出 1,048,576 bytes（1 MiB）的 Uint8Array。 | 官方源码确认；适用于审计的网页版本 |
-| 14 | APG 记录宽度 | 每条 APG 记录为 18 bytes。 | 官方源码及两个仓库样本确认 |
-| 15 | APG 每步记录数 | 当前官方 serializer 对每个步骤使用 ceil(delay_ms × 79 / 1000) 计算重复记录数。200 ms 对应 16 条记录。 | 官方源码确认；79 是 serializer 公式中的系数，不应直接解释为硬件物理采样率 |
-| 16 | APG 记录顺序 | 记录按 macroList 的步骤顺序写出；每步状态按计算出的记录数量重复。 | 官方源码确认 |
-| 17 | APG Offset 0–1 | Left stick X，16-bit big-endian。 | 官方源码确认 |
-| 18 | APG Offset 2–3 | Left stick Y，16-bit big-endian。 | 官方源码确认 |
-| 19 | APG Offset 4–5 | Right stick X，16-bit big-endian。 | 官方源码确认 |
-| 20 | APG Offset 6–7 | Right stick Y，16-bit big-endian。 | 官方源码确认 |
-| 21 | APG Offset 8–9 | LT 数值，16-bit big-endian；选中 LT 时写入 4095。 | 官方源码及 29 步样本确认 |
-| 22 | APG Offset 10–11 | RT 数值，16-bit big-endian；选中 RT 时写入 4095。 | 官方源码及 29 步样本确认 |
-| 23 | APG Offset 12 | 第一组按键位掩码。 | 官方源码及样本确认 |
-| 24 | APG Offset 13 | 第二组按键位掩码。 | 官方源码及样本确认 |
-| 25 | APG Offset 14 | D-pad 方向码；0 表示 neutral，1–8 表示八方向。 | 官方源码及 29 步样本确认 |
-| 26 | APG Offset 15 | Marker 字节；官方 serializer 对每条记录写入 0x02。 | 官方源码确认；17/29 步配对样本均一致 |
-| 27 | APG Offset 16–17 | Counter，按 big-endian 16-bit 写入；官方 serializer 从 11 开始，每条记录增加 14，并按 16-bit 回绕。 | 官方源码确认；17/29 步配对样本均一致 |
-| 28 | 摇杆编码：输入范围 | JSON/editor 的摇杆 value 是 0–100 百分比，不是 APG 原始轴值，也不是 0–2047 的整数。 | 官方 29 步 JSON 与本地界面确认 |
-| 29 | 摇杆编码：百分比转轴偏移 | m = round(value × 2047 / 100)。轴中性值为 2048；RIGHT/UP 使用 2048+m，LEFT/DOWN 使用 2048−m。 | 官方 29 步 APG 满量程值及本地 JSON→APG 字节级对照确认 |
-| 30 | 摇杆解码：轴偏移转百分比 | value ≈ abs(axis−2048) × 100 / 2047；结果可按 UI 精度舍入。APG 量化后，非满量程值不保证恢复原始小数。 | 本地解码实现与 25/50/75/100 回归测试确认 |
-| 31 | 摇杆满量程样本 | 100% 对应轴端点 4095 或 1；中性值为 2048。29 步样本覆盖左右摇杆四个基本方向。 | 29 步配对 APG 样本确认 |
-| 32 | 摇杆方向冲突 | 同一步若包含同一轴的冲突方向，serializer 按 sticks 数组顺序赋值，后处理的方向会覆盖先前赋值。 | 官方源码当前分支确认 |
-| 33 | 摇杆斜向 | 当前已审计 serializer 分支明确处理四个基本方向；不得假定斜向会自动拆成两个轴方向。 | 官方源码当前分支确认；斜向实际导出仍待独立样本验证 |
-| 34 | ABXY 位掩码 | Byte 12：PC 布局 A=0x02、B=0x01、X=0x08、Y=0x04；Switch 布局 A=0x01、B=0x02、X=0x04、Y=0x08。 | 官方源码确认；29 步样本与 Switch 分支相符 |
-| 35 | 其他按键位掩码 | Byte 12：LB=0x10、RB=0x20、LT=0x40、RT=0x80。Byte 13：R3=0x01、L3=0x02、START=0x04、SELECT=0x08、HOME=0x10。 | 官方源码与样本确认 |
-| 36 | D-pad APG 编码 | Neutral=0；UP=1、UP_RIGHT=2、RIGHT=3、DOWN_RIGHT=4、DOWN=5、DOWN_LEFT=6、LEFT=7、UP_LEFT=8。 | 官方源码与 29 步样本确认 |
-| 37 | D-pad JSON 标签 | UP=↑、DOWN=↓、LEFT=←、RIGHT=→、UP_LEFT=↖、UP_RIGHT=↗、DOWN_LEFT=↙、DOWN_RIGHT=↘。 | 官方 29 步 JSON 样本确认 |
-| 38 | D-pad JSON 坐标 | UP=(row 0,col 2)；DOWN=(2,2)；LEFT=(1,0)；RIGHT=(1,4)；UP_LEFT=(0,0)；UP_RIGHT=(0,4)；DOWN_LEFT=(2,0)；DOWN_RIGHT=(2,4)。 | 官方 29 步 JSON 样本确认 |
-| 39 | 空白延时的 APG 状态 | 空白延时输出中性摇杆轴 2048、LT/RT=0、按键掩码=0、D-pad=0。 | 官方源码及 Auto.apg 样本确认 |
-| 40 | 延时反推限制 | 对 n 条记录，符合 ceil(delay_ms×79/1000)=n 的正整数毫秒范围为 floor((n−1)×1000/79)+1 至 floor(n×1000/79)。16 条记录对应 190–202 ms，不能仅凭 APG 断言原始延时一定是 200 ms。 | 由官方源码公式数学推导 |
-| 41 | APG 解码步骤边界 | 本地 decoder 将相邻且控制状态相同的记录合并为候选 run；相邻原始步骤若状态相同，二进制中可能无法区分。 | 本地实现行为确认；不是精确恢复原始宏步骤 |
-| 42 | APG 原始字节保留 | 本地 decoder 保留原始 18-byte records、尾部字节及不足 18 bytes 的 fragment；未修改的来源记录在分段重建中可逐字节复制。 | 本地实现与 Chromium E2E 测试确认 |
-| 43 | APG 记录范围检测 | 本地自动检测是启发式：要求对齐的均匀 0xFF/0x67 尾部，以及前缀记录 marker 恒定、Counter 固定模 65536 步进；检测不唯一时应要求用户给出 recordCount。 | 本地实现与合成测试确认；不是通用 APG 终止符规范 |
-| 44 | APG 未知字段与尾部 | 未确认的字节不得擅自改写或丢弃；无法可靠判断记录边界时应保留原始数据并给出警告。 | 项目数据保全要求 |
-| 45 | 29 步配对样本：文件身份 | Official.29steps.apg 大小 1,048,576 bytes；Git blob SHA-1=196a5ca439aab90dc8997721fe4c1e4a26c2280f；SHA-256=c51b5b280ac4ba442b8cd8327c4b2068ed13efbb08a80293c3dc97ae194b5c07。 | GitHub Actions 直接读取二进制并校验 Git blob SHA |
-| 46 | 29 步配对样本：有效记录区 | 前 464 条记录为有效连续记录，共 8,352 bytes；其后 1,040,224 bytes 全部为 0xFF。 | 对该文件逐字节扫描；仅对该样本成立 |
-| 47 | 29 步配对样本：Marker/Counter | 464 条有效记录的 byte 15 均为 0x02；Counter 从 11 起每条 +14，最后一条为 6493；全部 463 个相邻差值一致。 | 官方 29 步 APG 二进制扫描报告 |
-| 48 | 29 步配对样本：步骤与记录数 | JSON 有 29 步，每步 delay=200 ms；按官方公式每步 16 条记录，总计 464 条。 | JSON 与 APG 二进制交叉核对 |
-| 49 | 29 步配对样本：控制状态 | 样本覆盖 LT/RT、LB/RB、左右摇杆四个基本方向、L3/R3、SELECT/START/HOME、A/B/X/Y、D-pad 八方向。满量程摇杆值为 4095 或 1。 | 官方 JSON 与 APG 逐步状态报告交叉核对 |
-| 50 | 29 步配对样本：ABXY | A/B/X/Y 的 byte 12 值分别为 0x01/0x02/0x04/0x08，与 Switch 布局一致。 | 官方配对样本确认 |
-| 51 | APG 容器尾部 | 官方 serializer 将有效记录区之后的全部字节填为 0xFF，直至 1 MiB 容器结束。 | 官方源码确认；17/29 步配对样本均一致 |
-| 52 | 样本 profile | 17/29 步精确动作签名 profile 仅保留作历史样本审计测试；正式编辑器导出不再调用 profile 检测，也不以步数或动作签名作为导出条件。 | 当前 app.mjs 不导入 profile 模块；本地代码检查 |
-| 53 | JSON→APG 配对导出（本地自动化） | 17/29 步官方 JSON 通过通用 encoder 导出，并与配对官方 APG 逐字节一致；37 步任意步数 JSON 的浏览器导出成功。 | GitHub Actions Run 44938706631：Chromium E2E 7/7、Node tests 60/60；仅证明本地自动化，不等于官方网页人工验收 |
-| 54 | 任意步数导出 | JSON 导出路径不检查固定步数、不要求动作签名匹配；每一步直接按自身 delay 和动作状态生成记录。 | editor/app.mjs 与 codec/apg-codec.mjs 当前实现；CI 待确认 |
-| 55 | 本地动作模型 | codec/action-model.mjs 统一普通步骤、空白延时、JSON normalize、逐步延时更新和 JSON 导出；默认新步骤 200 ms，导入 delay 不应被静默重置，未知 JSON 字段应保留。 | 本地实现与测试 |
-| 56 | APG Encoder/Decoder | codec/apg-codec.mjs 实现 18-byte 编码、1 MiB 容器、摇杆/扳机/按键/D-pad、PC/Switch 布局；默认自动采用官方 Marker=0x02、Counter 起点=11/步进=14、尾部 0xFF，并允许显式覆盖供特殊变体测试。 | 官方 serializer 源码与两组配对样本；本地实现 |
-| 57 | APG→编辑模型 | codec/apg-to-model.mjs 将记录 run 转为可编辑 JSON 形状，并保留来源记录范围、原始记录和延时可行区间；这是推断模型，不是精确恢复。 | 本地实现与测试 |
-| 58 | APG 重建 | codec/apg-rebuild.mjs 与 codec/apg-edit-rebuild.mjs 支持组合原始记录区段和重新编码步骤；未修改区段可原样复制，修改/新增步骤重新编码，删除步骤不输出。尾部随记录区移动；容量不足时必须报告截断。 | 本地实现与自动化测试；依赖正确来源区段/profile |
-| 59 | 固定记录修补 | codec/apg-record-patcher.mjs 可在固定记录布局下修改指定记录；不支持插入/删除记录或改变步骤延时。 | 本地实现与测试 |
-| 60 | 离线网页编辑器 | editor/ 支持 APG/JSON 导入、动作/空白延时新增删除、清空、排序、每步延时、按键/D-pad/扳机/四方向摇杆力度编辑、JSON/APG 导出。 | 本地实现；以 browser E2E 和 smoke test 覆盖范围为准 |
-| 61 | 摇杆 UI 输入 | 编辑器摇杆力度输入范围为 0–100%，步进 1；标签显示百分比。 | editor/app.mjs 当前实现 |
-| 62 | Windows 桌面封装 | Electron + NSIS Windows x64 安装程序；renderer 使用 contextIsolation、sandbox，Node integration 关闭；本地资源服务绑定 127.0.0.1。 | desktop/main.cjs 与 package.json；CI 构建成功不等于用户设备验收 |
-| 63 | 设备连接/写入 | 当前程序不支持通过 USB 或 Bluetooth 将宏写入控制器。 | 当前产品范围 |
-| 64 | 最新 CI 与 Windows 构建 | 提交 `6d2d70f6d05ea5dbaceb9087df617bf95b458711` 的 APG codec workflow 通过：Chromium E2E 7/7、Node tests 60/60；Windows x64 NSIS 构建成功并上传 Artifact `GuliKit-APG-Editor-Windows-x64`，Artifact ID `14720289056`，ZIP 大小 111,388,012 bytes，有效期至 2026-12-05 19:03:21 UTC。 | APG Run [44938706631](https://github.com/ankpsx/gulikit-source/actions/runs/44938706631)；Windows Run [44938706702](https://github.com/ankpsx/gulikit-source/actions/runs/44938706702)。runner 构建成功不等于用户电脑实机安装验收 |
-| 65 | 官方网页实际导入验收 | 用户已实际在 GuliKit 官方网页导入本项目导出的 29 步 JSON，并确认导入验收成功；本轮验收目标为摇杆力度与 D-pad 八方向箭头在官方网页中正确显示。 | 用户实际操作反馈；属于官方网页人工验收，尚未包含控制器硬件执行/回放验证 |
-| 66 | 官方 JSON→APG 通用导出 | 已实现通用导出路径：不论步骤数量，按每步 ceil(delay_ms×79/1000) 生成 18-byte 记录；自动写入 Marker=0x02、Counter=11/+14/16-bit 回绕、1 MiB 容器与 0xFF 尾部，不再要求用户填写元数据或匹配固定步数 profile。网页 JSON 不含 ABXY 配置，界面默认 Switch（与 17/29 步官方配对样本一致），仍保留 PC/Switch 切换；超出 1 MiB 容量时界面显示截断警告。 | 官方源码确认通用序列化规则；17/29 步配对文件字节级比较通过，37 步任意长度浏览器 E2E 通过；CI Run 44938706631：Chromium E2E 7/7、Node tests 60/60 |
-| 67 | 17 步配對樣本 | Official.17steps.json 共 17 步；配对 APG SHA-256=4e00caeb6de9ce6cdb30dd667de6af09a27ff619ec888316d3b3f6dc19049373；有效记录 777 条；尾部 1,034,590 bytes 为 0xFF；与通用 encoder 导出逐字节一致。 | 官方 JSON/APG 配对样本与本地 CI 测试确认；仅作为回归样本，不是固定步数限制 |
-| 68 | APG→JSON 反向导入的有损边界（17 步新样本） | 新上传 `NoOfficial.17steps-02.json` 实际只有 16 步。与 `Official.17steps.json` 对比：同一摇杆轴上的多个/相反方向无法同时存入 APG 单一轴值；多个 D-pad 方向无法同时存入 APG 单一方向码；相邻两个不同 JSON 步骤若最终编码成相同状态，APG 不含步骤边界，解码会合并为一个 run（本样本 2×200ms 合并为 32 条记录，推定 delay=393ms）；2000/3000ms 延时也只能由记录数反推范围，当前解码器选取范围下界 1988/2988ms。 | GitHub `Official.17steps.json` 与 `NoOfficial.17steps-02.json` 逐步语义比较；codec/apg-codec.mjs、codec/apg-to-model.mjs 结构核对；CI 新增反向导入警告测试 |
+以下是已审计官方网页版本和配对样本所见结构；遇到新版本字段应保留未知字段并重新核对，不要把此处描述当成所有未来版本的封闭 schema。
 
-## 3. 已确认的摇杆换算规则（重点）
+- 顶层主要字段：`fileName`、`macroList`、`version`；配对样本中的 version 为字符串 `"1.0"`。
+- `macroList` 是有序步骤数组。一个步骤可同时包含多个 buttons 和多个 sticks；不能假定一个按键等于一个步骤。
+- 普通步骤包含 `id`、`buttons`、`sticks`、`delay`、`isBlankDelay:false`。
+- 空白延时是独立步骤：buttons/sticks 为空，包含 delay 与 `isBlankDelay:true`。
+- 按键描述符包含 `id`、`label`、`type`、`position:{row,col}`。
+- 摇杆描述符包含 stick 描述、direction 和 value；编辑器中的 value 按 0–100% 力度处理。
+- 官方网页 JSON 导入是文本读取后 JSON.parse；官方网页 APG 导出则从内存中的 macroList 直接序列化，不是先下载 JSON 再转码。
+- 官方网页普通步骤默认 delay 在已审计版本中为 200 ms；这是网页默认值，不代表每一步必须是 200 ms。
 
-必须区分“JSON 百分比”和“APG 轴值”：
+## 3. 官方 APG 编码规则（JSON → APG）
 
-- JSON/editor 的 `value` 是 0–100 的力度百分比。
-- 编码时先算 `m = Math.round(value * 2047 / 100)`。
-- 中性轴为 2048；RIGHT/UP 为 `2048 + m`，LEFT/DOWN 为 `2048 - m`。
-- 解码时按 `Math.abs(axis - 2048) * 100 / 2047` 反算近似百分比。
-- 100% 的端点是 4095 或 1；不能把 `2047 / 100` 当作编码乘数的倒数。
-- 本规则已用 29 步配对 APG 的四个左摇杆方向和四个右摇杆方向核对；25/50/75/100% 的本地回归测试另行覆盖解码近似值。
+### 3.1 容器与记录
 
-## 4. 官方配对样本的审计参数（仅作测试证据，不是导出限制）
+- 审计的官方网页 serializer 生成固定 **1,048,576 bytes（1 MiB）** 的 Uint8Array。
+- 每条记录 **18 bytes**，记录按 macroList 顺序排列。
+- 每个步骤生成的重复记录数：
 
-| 项目 | 已验证值 |
-|---|---:|
-| JSON 文件 | `verification/apg-sample-validator/Official.29steps.json` |
-| APG 文件 | `verification/apg-sample-validator/Official.29steps.apg` |
-| APG 文件大小 | 1,048,576 bytes |
-| SHA-256 | `c51b5b280ac4ba442b8cd8327c4b2068ed13efbb08a80293c3dc97ae194b5c07` |
-| JSON 步骤数 | 29 |
-| 每步 delay | 200 ms |
-| 每步 APG 记录数 | 16 |
-| 有效 APG 记录总数 | 464 |
-| 有效记录区长度 | 8,352 bytes |
-| Marker | `0x02` |
-| Counter 起始值 | 11 |
-| Counter 步进值 | 14 |
-| 最后一条 Counter | 6493 |
-| ABXY 布局 | Switch |
-| 尾部填充 | `0xFF` |
-| 尾部长度 | 1,040,224 bytes |
+  `recordCount = ceil(delay_ms × 79 / 1000)`
 
-以上数值仅描述 29 步配对样本。17 步配对样本另有 777 条有效记录、Marker=0x02、Counter=11/+14、Switch ABXY 与 0xFF 尾部；这两组样本共同用于回归测试。Marker、Counter 与尾部填充现已由官方 serializer 源码确认是生成器规则，不再视为需要样本 profile 的未知参数。ABXY 配置不在官方 JSON 顶层字段中，因此编辑器采用 Switch 默认值（与两组配对样本一致），并允许用户在需要时切换 PC。
+  例如 200 ms → 16 条记录。79 是已审计 serializer 使用的公式系数；不要把它直接解释成控制器硬件的物理采样率。
+- 当前已审计官方 serializer 的每条记录 Marker 为 `0x02`。
+- Counter 为 16-bit big-endian：第一条从 11 开始，每条记录增加 14，按 16-bit 回绕。
+- 有效记录之后填充 `0xFF`，直到 1 MiB 容器结束。
+- 若生成记录超出 1 MiB 可容纳范围，编辑器必须明确警告截断；不能静默声称完整导出。
 
-## 5. 通用 JSON→APG 要求与目前未完成的验收
+### 3.2 18-byte 记录字段
 
-1. **通用官方 JSON→APG 导出**：第一版通用实现已通过 CI：Chromium E2E 7/7、Node tests 60/60；17/29 步配对 APG 均逐字节一致，37 步任意长度 JSON 的浏览器导出通过。用户后续实测确认导入 Official.17steps.json 后可生成正确 APG。导出不匹配固定步数 profile，不要求手动填写 Marker/Counter/尾部填充；超出 1 MiB 时会提示截断。ABXY 是 JSON 未包含的外部配置，当前默认 Switch，PC 可切换；不能声称可从 JSON 自动识别。
-2. **Windows 用户实机验收**：GitHub Windows runner 构建成功不等于用户电脑安装、启动和导入导出成功；仍需用户实际安装验收。
-3. **APG 元数据与尾部通用规则**：官方网页 serializer 源码现已确认 Marker=0x02、Counter 起点 11/每条 +14（16-bit 回绕）、尾部 0xFF；17/29 两组配对样本一致。若未来出现其他网页版本/固件变体，再按新证据扩展，不得覆盖当前已确认规则。
-4. **斜向摇杆**：官方 serializer 当前已审计分支没有明确的斜向合成逻辑；需要官方 UI 导出样本。
-5. **损坏/未知格式文件**：需继续验证未知 marker、未知 D-pad、截断文件、非对齐尾部、Counter 中断等情况的警告和保留策略。
-6. **USB/Bluetooth 写入**：当前不支持，不得在界面或说明中暗示已支持。
+| Byte offset | 字段 | 编码 |
+|---:|---|---|
+| 0–1 | Left stick X | 16-bit big-endian |
+| 2–3 | Left stick Y | 16-bit big-endian |
+| 4–5 | Right stick X | 16-bit big-endian |
+| 6–7 | Right stick Y | 16-bit big-endian |
+| 8–9 | LT | 16-bit big-endian；按下时 4095 |
+| 10–11 | RT | 16-bit big-endian；按下时 4095 |
+| 12 | 第一组按键位掩码 | 8-bit |
+| 13 | 第二组按键位掩码 | 8-bit |
+| 14 | D-pad 方向码 | 0 neutral；1–8 八方向 |
+| 15 | Marker | 官方 serializer 写入 `0x02` |
+| 16–17 | Counter | 16-bit big-endian；11 起始、每条 +14、溢出回绕 |
 
-## 6. 项目文件索引
+### 3.3 摇杆力度
 
-- `codec/action-model.mjs`：共享动作模型与 JSON normalize/export。
-- `codec/apg-codec.mjs`：APG 18-byte encoder、低级 decoder。
-- `codec/apg-to-model.mjs`：APG 记录 run 转可编辑模型、摇杆百分比反推、D-pad descriptor。
-- `codec/apg-metadata-profiles.mjs`：历史样本签名审计工具；当前编辑器 JSON→APG 导出不再依赖此模块。
-- `codec/apg-range-detect.mjs`：APG 有效记录范围启发式检测。
-- `codec/apg-record-patcher.mjs`：固定布局记录修补。
-- `codec/apg-rebuild.mjs`：分段重建。
-- `codec/apg-edit-rebuild.mjs`：基于 APG provenance/baseline 的编辑重建计划。
-- `editor/`：离线网页编辑器与浏览器 E2E。
-- `desktop/`：Electron 桌面封装。
-- `verification/apg-sample-validator/Official.29steps.json` 与 `Official.29steps.apg`：29 步配对官方样本。
-- `verification/apg-sample-validator/inspect-29steps-apg.mjs`：对原始 29 步 APG 做 SHA、记录范围、Marker/Counter、尾部和逐步状态审计。
+必须区分 JSON/editor 的百分比与 APG 原始轴值：
 
-## 7. 维护规则
+- 输入 value 是 0–100%，不是 APG 轴值。
+- `m = round(value × 2047 / 100)`。
+- 轴中性值为 2048。
+- RIGHT/UP：`2048 + m`；LEFT/DOWN：`2048 - m`。
+- 满量程 100% 对应 4095 或 1。
+- 解码近似反算：`abs(axis - 2048) × 100 / 2047`。由于量化，非满量程值不保证恢复原始小数。
+- 若同一步的 sticks 数组在同一轴上包含冲突方向，官方 serializer 按数组顺序赋值，后处理的值覆盖先前值。
+- 当前已审计 serializer 的分支明确处理四个基本方向；不要推断斜向会自动拆成两个轴方向。斜向仍需独立官方样本验证。
 
-- 本文件是唯一技术知识库；结论集中维护在第 2 节总表，不按研究日期不断追加重复章节。
-- 新证据推翻旧规则时，直接删除错误规则并更新相关表格、公式、未完成事项和文件索引；不保留会误导下一次开发的旧说法。
-- 官方 JSON→APG：通用编码器自动按每步延时与动作状态生成任意步数 APG；禁止将固定步数或单一样本 profile 作为导出门槛。
-- 每条结论必须标明证据范围；单样本事实必须写清楚“仅适用于该样本”。
-- 源码、单元测试、Chromium E2E、官方网页人工验收、Windows 用户实机验收分别记录，不得混为一谈。
-- 修改知识库前核对当前源码、样本和 CI；不得根据历史摘要复制已经过时的测试统计、Artifact 编号或状态。
+### 3.4 按键位掩码与 D-pad
+
+Byte 12：
+- PC 布局：A=`0x02`、B=`0x01`、X=`0x08`、Y=`0x04`。
+- Switch 布局：A=`0x01`、B=`0x02`、X=`0x04`、Y=`0x08`。
+- LB=`0x10`、RB=`0x20`、LT=`0x40`、RT=`0x80`。
+
+Byte 13：
+- R3=`0x01`、L3=`0x02`、START=`0x04`、SELECT=`0x08`、HOME=`0x10`。
+- 未确认的其他位应保留，不得自行解释或清零。
+
+Byte 14 D-pad：
+- Neutral=0
+- UP=1、UP_RIGHT=2、RIGHT=3、DOWN_RIGHT=4
+- DOWN=5、DOWN_LEFT=6、LEFT=7、UP_LEFT=8
+
+官方 JSON 八方向标签/坐标（已审计 29 步样本）：
+- UP ↑=(row 0,col 2)；DOWN ↓=(2,2)；LEFT ←=(1,0)；RIGHT →=(1,4)
+- UP_LEFT ↖=(0,0)；UP_RIGHT ↗=(0,4)；DOWN_LEFT ↙=(2,0)；DOWN_RIGHT ↘=(2,4)
+
+空白延时编码为中性摇杆轴 2048、LT/RT=0、按键掩码=0、D-pad=0。
+
+## 4. 通用导出要求与已验证结果
+
+### 4.1 通用 JSON → APG 行为
+
+- 导出必须直接遍历任意长度 macroList，不按 17/29 步等固定步数分流。
+- 每步按其 delay 和动作状态生成记录；空白延时按中性状态生成记录。
+- Marker、Counter 和 0xFF 填充使用已确认的官方 serializer 规则，不要求用户手动填写。
+- JSON 本身不包含 ABXY 布局，因此默认 Switch，并允许切换 PC/Switch。
+- `apg-metadata-profiles.mjs` 中的历史样本 profile 只能用于审计/回归，不能成为导出前置条件。
+- 超出容器容量必须提示截断。
+
+### 4.2 配对官方样本
+
+**17 步样本**
+- JSON：`verification/apg-sample-validator/Official.17steps.json`
+- APG：`verification/apg-sample-validator/Official.17steps.apg`
+- 17 步对应 777 条有效记录；1 MiB 文件中剩余 1,034,590 bytes 为 `0xFF`。
+- APG SHA-256：`4e00caeb6de9ce6cdb30dd667de6af09a27ff619ec888316d3b3f6dc19049373`。
+- 通用 encoder 输出与该配对 APG 逐字节一致。该样本是回归测试，不是 17 步限制。
+
+**29 步样本**
+- JSON：`verification/apg-sample-validator/Official.29steps.json`
+- APG：`verification/apg-sample-validator/Official.29steps.apg`
+- APG 大小 1,048,576 bytes；SHA-256：`c51b5b280ac4ba442b8cd8327c4b2068ed13efbb08a80293c3dc97ae194b5c07`。
+- 29 步均为 200 ms，每步 16 条记录，共 464 条（8,352 bytes）；其后 1,040,224 bytes 为 `0xFF`。
+- 464 条记录 Marker 均为 `0x02`；Counter 从 11 起每条 +14，最后为 6493。
+- 样本的 ABXY 位掩码为 Switch 布局；样本覆盖 LT/RT、LB/RB、左右摇杆四个基本方向、L3/R3、SELECT/START/HOME、A/B/X/Y 和 D-pad 八方向。
+
+这两组配对样本与官方 serializer 源码共同支持当前通用编码规则。样本参数只描述对应样本；通用规则来自 serializer 源码与多组交叉验证，不是由某一个步数模板推断。
+
+### 4.3 用户验收记录
+
+- 用户已反馈：将 29 步 JSON 导入 GuliKit 官方网页后，摇杆力度和 D-pad 八方向箭头显示正确。
+- 用户已反馈：`Official.17steps.json` 现在可以在本程序中正确生成对应 APG。
+- 上述是用户实际操作反馈；不等于控制器硬件执行/回放验证。未来有新验收时，应注明具体文件、操作路径和观察结果。
+
+## 5. APG → JSON：必须明确的有损限制
+
+APG 是定长记录流，不包含原始 JSON 的完整语义。不得承诺 APG → JSON 与原始 JSON 完全一致。
+
+1. **摇杆同轴方向冲突丢失：** APG 每个摇杆轴只有一个有符号数值。同一步同一轴同时存在相反方向（例如 LEFT+RIGHT）时，不能在 APG 中保留两个方向；反向导入只能恢复编码后的轴值方向。
+2. **D-pad 多方向丢失：** APG 每条记录只有一个 D-pad 方向码，不能表示同一时刻多个 D-pad 方向的组合。
+3. **原始步骤边界丢失：** APG 不存 JSON step ID 或步骤边界。相邻 JSON 步骤若最终编码成相同控制状态，解码器会将连续记录合并为一个 run，无法判断原先有几步。
+4. **精确 delay 丢失：** APG 只保存重复记录数量，无法唯一反推出原始毫秒数。若记录数为 n，符合官方公式的整数毫秒范围为：
+
+   `floor((n−1) × 1000 / 79) + 1` 至 `floor(n × 1000 / 79)`。
+
+   例如 16 条记录只说明 delay 在 190–202 ms，不足以证明原始值恰好是 200 ms。当前 decoder 在范围内选取下界作为推断值，并保留可行范围。
+
+### 5.1 17 步反向导入样本的实际差异
+
+- `Official.17steps.json` 是 17 步官方 JSON。
+- `NoOfficial.17steps-02.json` 是本程序将配对 APG 反向导入后得到的 JSON，只有 16 步；它不是另一个官方 JSON。
+- 原始 JSON 中同轴多方向、多个 D-pad 方向不能完整写入 APG，反向导入只能恢复 APG 实际保存的状态。
+- 原始两个相邻步骤虽不同，但最终 APG 状态相同；两步各 200 ms 合并为连续 32 条记录，反向解码为一个 run，当前推断 delay 为 393 ms（该记录数可行范围为 393–405 ms）。
+- 2000 ms 与 3000 ms 分别生成 158 与 237 条记录；反向解码当前选择可行范围下界 1988 ms 与 2988 ms。
+- 因此 17 → 16 是 APG 表达能力造成的反向信息损失，不代表通用 JSON → APG 导出器按 16 步生成，也不代表未编辑的原始 APG 记录被破坏。
+
+### 5.2 原始记录保留与重建
+
+- APG decoder/model 保留来源记录范围、原始 18-byte records、尾部及不足 18 bytes 的 fragment（具体能否完整重建取决于输入范围识别与容量）。
+- 对未修改的来源记录区段，重建器可逐字节复制；修改/新增步骤重新编码；删除步骤不输出对应来源区段。
+- 固定记录 patcher 只修改指定记录状态并保留其他字节和文件长度；它不支持插入/删除记录或改变步骤延时。
+- 自动记录范围检测是启发式，不是 APG 官方终止符规范。当前检测依赖候选尾部填充对齐、前缀 Marker 一致及 Counter 规律；若文件全填充、Marker 改变、Counter 不连续、尾部不对齐或输入过短，结果可能 ambiguous。此时应要求明确 recordCount 或保留原始文件，不得强行猜测。
+- 已审计样本的官方尾部为 `0xFF`。代码中对其他填充值（例如 `0x67`）的检测属于兼容性启发式，不得据此宣称官方 APG 通用尾部也可能是 0x67。
+- 不认识的字节、位或尾部数据应作为 opaque data 保留；只有有明确证据时才解释或改写。
+
+## 6. 当前自动化验证与构建状态
+
+最新已核实提交：`7dd2f90f49e09cd2a6096361d08fc5ce5dfe86d6`。
+
+- APG codec workflow：Run [44940695471](https://github.com/ankpsx/gulikit-source/actions/runs/44940695471)，成功。Node tests **61/61 通过**，其中包括 APG 反向导入有损警告回归测试；浏览器 E2E workflow step 成功。
+- Windows installer workflow：Run [44940695474](https://github.com/ankpsx/gulikit-source/actions/runs/44940695474)，成功；Windows x64 NSIS 安装包已构建并上传 artifact。
+- Artifact：`GuliKit-APG-Editor-Windows-x64`，ID `14721965696`，ZIP 111,388,250 bytes，SHA-256 `4eb19013d38ecfc0193f9e925cb6a2caccb627ae4aea216feb12f32621f6965e`，过期时间 2026-12-05 19:25:13 UTC。
+- CI 成功只证明对应自动化任务/runner 构建成功，不证明用户 Windows 电脑已安装启动，也不证明控制器硬件回放成功。
+
+## 7. 尚未完成的验证
+
+1. **Windows 用户电脑验收：** 实际安装最新 NSIS 包，验证启动、离线运行、JSON/APG 导入导出及桌面行为。
+2. **控制器硬件验收：** 目前没有 USB/Bluetooth 写入或硬件回放能力；若未来实现，需单独设计协议并实际测试。
+3. **摇杆斜向：** 取得官方网页斜向输入及导出 APG 配对样本后再确定编码行为。
+4. **异常 APG：** 持续补充未知 Marker、未知位、Counter 中断、截断文件、非对齐尾部、全填充文件及不同填充值的保留/警告测试。
+5. **官方网页回归：** 在官方网页上实际导入不同步数、不同动作组合和边界延时的 JSON，确认其 UI 与导出行为；每次记录网页版本/日期和样本身份。
+
+## 8. 知识库维护规则
+
+- 本文件是项目唯一技术知识库。不要新建第二份重复的 APG 规则文档，也不要用“第 N 条”方式不断追加重复记录。
+- 新证据与现有规则冲突时，先核对当前源码、样本和测试；然后直接修订对应章节，删除错误旧说法，不保留两套互相矛盾的结论。
+- 每个结论必须标明证据类别与适用范围；单一样本事实必须明确限定为该样本。
+- 更新 CI 状态时必须使用最新 commit 对应的 run、实际测试数量和 artifact 元数据；不得复用旧 run ID、旧测试计数或已过期 artifact。
+- 任何助手都不得把“代码已实现”“CI 通过”“官方网页人工验收”“Windows 用户实机验收”“控制器硬件验收”混为一谈。

@@ -62,7 +62,7 @@ test("rejects absent metadata and invalid layout", () => {
 
 test("record parser preserves raw records and opaque tail bytes", async () => {
   const { decodeAPGRecords } = await import("./apg-codec.mjs");
-  const encoded = encodeAPG({ macroList: [{ delay: 13, buttons: [{ id: "A" }, { id: "LT" }],
+  const encoded = encodeAPG({ macroList: [{ delay: 1, buttons: [{ id: "A" }, { id: "LT" }],
     sticks: [] }] }, { metadata, fileSize: 64, fillByte: 0xff });
   const parsed = decodeAPGRecords(encoded.data, { recordCount: 1, abxyLayout: "PC" });
   assert.equal(parsed.records.length, 1);

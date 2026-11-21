@@ -84,6 +84,25 @@ function renderStickEditor(step){
     sg.append(card);
   }
 }
+function stepSummary(step){
+  if(step.isBlankDelay)return "空白延时：无按键或摇杆";
+  const buttonNames={
+    A:"A",B:"B",X:"X",Y:"Y",LB:"L",RB:"R",LT:"ZL",RT:"ZR",
+    L3:"左摇杆按压（L3）",R3:"右摇杆按压（R3）",START:"＋键",SELECT:"－键",HOME:"HOME",
+    D_UP:"方向键↑",D_DOWN:"方向键↓",D_LEFT:"方向键←",D_RIGHT:"方向键→",
+    D_UP_LEFT:"方向键↖",D_UP_RIGHT:"方向键↗",D_DOWN_LEFT:"方向键↙",D_DOWN_RIGHT:"方向键↘"
+  };
+  const buttons=step.buttons.map(buttonNames[x=>x.id] ?? buttonNames.A);
+  const sticks=step.sticks.map(item=>{
+    const side=item.stick.id==="L_STICK"?"左摇杆":"右摇杆";
+    const direction={UP:"上",DOWN:"下",LEFT:"左",RIGHT:"右"}[item.direction]??item.direction;
+    return side+direction+" "+item.value+"%";
+  });
+  const parts=[];
+  if(buttons.length)parts.push("按键："+buttons.join("、"));
+  if(sticks.length)parts.push("摇杆："+sticks.join("、"));
+  return parts.length?parts.join("；"):"未设置按键或摇杆";
+}
 function render(){
   $("fileName").value=config.fileName;const host=$("steps");host.replaceChildren();
   if(!config.macroList.length){host.innerHTML='<div class="empty">当前没有步骤。请使用上方按钮添加。</div>';activeStepId=null;$("stepEditor").classList.add("hidden");return;}
@@ -99,6 +118,9 @@ function render(){
     n.addEventListener("dragover",e=>{e.preventDefault();e.dataTransfer.dropEffect="move";});
     n.addEventListener("drop",e=>{e.preventDefault();const from=Number(e.dataTransfer.getData("text/plain"));if(Number.isInteger(from)&&from!==i&&from>=0&&from<config.macroList.length){const [moved]=config.macroList.splice(from,1);config.macroList.splice(i,0,moved);render();}});
     n.querySelector(".step-title").textContent=(i+1)+". "+(step.isBlankDelay?"空白延时":"动作步骤");
+    const summary=document.createElement("p");summary.className="step-summary";
+    summary.textContent=stepSummary(step);summary.classList.toggle("hidden",step.id===activeStepId&&!step.isBlankDelay);
+    n.querySelector(".step-head").after(summary);
     const delay=n.querySelector(".delay");delay.value=step.delay;delay.onchange=()=>step.delay=Number(delay.value);
     n.querySelector(".blank-note").classList.toggle("hidden",!step.isBlankDelay);
     n.querySelector(".convert-action").onclick=()=>{step.isBlankDelay=false;activeStepId=step.id;render();};

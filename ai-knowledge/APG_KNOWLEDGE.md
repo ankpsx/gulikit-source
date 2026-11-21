@@ -177,6 +177,14 @@ The official `js/index.html` identifies the page as “GuliKit Macro editor” a
 - Next priority: deobfuscate `script_17.js`, trace each UI action through state changes to export/import code, and inspect `script_16.js` only as needed to establish any relationship with editor service calls.
 
 
+## 9A. Actual APG file size — user-confirmed observation
+
+- The user confirms that the actual generated `.apg` file is **1 MB**.
+- Do not state that the actual APG file is 1,024 bytes.
+- `script_17.js` contains a `new Uint8Array(1024)` allocation in the inspected `generateAPGContent()` code path. This establishes a 1,024-byte buffer in that code path only; it does not establish the size of the final APG file.
+- The relationship between the 1,024-byte buffer and the observed 1 MB output remains **UNRESOLVED**. Investigate the complete export path, other official source code, and any packaging / padding / transfer steps before concluding how the final file reaches 1 MB.
+- Keep these facts separate: **observed final file size = 1 MB**; **inspected JS buffer allocation = 1,024 bytes**.
+
 ## 10. script_17.js — primary macro editor: first-pass functional analysis
 
 Source inspected: `js/script_17.js`, 4,430 lines, 234,346 characters, blob SHA `60be095e889ef9a248882c2444513c9c74db8dfb` (main at time of inspection). The file is heavily string-array obfuscated: identifiers such as `_0x2b8964` resolve strings through `_0x2c2b()`. The descriptions below distinguish directly visible behavior from details that still require full deobfuscation.

@@ -119,7 +119,7 @@ function render(){
     n.addEventListener("drop",e=>{e.preventDefault();const from=Number(e.dataTransfer.getData("text/plain"));if(Number.isInteger(from)&&from!==i&&from>=0&&from<config.macroList.length){const [moved]=config.macroList.splice(from,1);config.macroList.splice(i,0,moved);render();}});
     n.querySelector(".step-title").textContent=(i+1)+". "+(step.isBlankDelay?"空白延时":"动作步骤");
     const summary=document.createElement("p");summary.className="step-summary";
-    const isActiveAction=step.id===activeStepId&&!step.isBlankDelay;summary.textContent=stepSummary(step);summary.hidden=isActiveAction;summary.style.display=isActiveAction?"none":"block";
+    summary.textContent=stepSummary(step);summary.hidden=false;summary.style.display="block";
     n.querySelector(".step-head").after(summary);
     const delay=n.querySelector(".delay");delay.value=step.delay;delay.onchange=()=>step.delay=Number(delay.value);
     n.querySelector(".blank-note").classList.toggle("hidden",!step.isBlankDelay);

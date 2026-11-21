@@ -44,7 +44,7 @@ test("d-pad values and cardinal stick values are written big-endian", () => {
   { metadata, fileSize: 18 }).data;
   const r = record(bytes);
   assert.equal(r[14], DPAD.D_UP_RIGHT);
-  assert.equal(u16(r, 0), 2048 + Math.round(100 * 100 / 2047));
+  assert.equal(u16(r, 0), 4095);
 });
 
 test("zero delay creates no records and preserves fill", () => {
@@ -130,19 +130,24 @@ test("delay inverse range is exact for one-record run", () => {
 });
 
 
-test("stick value coercion and overflow follow the serializer arithmetic", () => {
-  const encodeAxis = value => {
+test("JSON stick percentages map to APG's 0–2047 axis magnitude", () => {
+  const encodeAxis = (value, direction = "RIGHT") => {
     const bytes = encodeAPG({ macroList: [{ delay: 13, buttons: [], sticks: [
-      { stick: { id: "L_STICK" }, direction: "RIGHT", ...(value === undefined ? {} : { value }) },
+      { stick: { id: "L_STICK" }, direction, ...(value === undefined ? {} : { value }) },
     ] }] }, { metadata, fileSize: 18 }).data;
-    return u16(record(bytes), 0);
+    return u16(record(bytes), direction === "UP" || direction === "DOWN" ? 2 : 0);
   };
   assert.equal(encodeAxis(undefined), 2048);
-  assert.equal(encodeAxis(-2047), 1948);
-  assert.equal(encodeAxis(0.5), 2048);
-  assert.equal(encodeAxis(2047), 2148);
-  assert.equal(encodeAxis(2000000), (2048 + Math.round(2000000 * 100 / 2047)) & 0xffff);
   assert.equal(encodeAxis(null), 2048);
+  assert.equal(encodeAxis(0), 2048);
+  assert.equal(encodeAxis(25), 2560);
+  assert.equal(encodeAxis(50), 3072);
+  assert.equal(encodeAxis(75), 3583);
+  assert.equal(encodeAxis(100), 4095);
+  assert.equal(encodeAxis(100, "LEFT"), 1);
+  assert.equal(encodeAxis(100, "DOWN"), 1);
+  assert.equal(encodeAxis(0.5), 2058);
+  assert.equal(encodeAxis(2000000), (2048 + Math.round(2000000 * 2047 / 100)) & 0xffff);
 });
 
 test("negative delays produce no records; capacity overflow is reported", () => {

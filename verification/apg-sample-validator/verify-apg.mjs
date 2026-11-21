@@ -35,7 +35,7 @@ function sha256(buffer) {
   return createHash("sha256").update(buffer).digest("hex");
 }
 
-function main() {
+async function main() {
   const inputPath = process.argv[2];
 
   if (!inputPath || inputPath === "--help" || inputPath === "-h") {

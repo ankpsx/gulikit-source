@@ -1,0 +1,33 @@
+name: Inspect official 29-step APG metadata
+
+on:
+  push:
+    paths:
+      - "verification/apg-sample-validator/Official.29steps.apg"
+      - "verification/apg-sample-validator/inspect-29steps-apg.mjs"
+      - ".github/workflows/inspect-29steps-apg.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-official-29steps-apg:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Inspect the exact committed APG binary
+        working-directory: verification/apg-sample-validator
+        run: node inspect-29steps-apg.mjs Official.29steps.apg | tee apg-metadata-report.md
+      - name: Publish inspection report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Official-29steps-APG-metadata-report
+          path: verification/apg-sample-validator/apg-metadata-report.md
+          if-no-files-found: warn

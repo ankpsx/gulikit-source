@@ -1,0 +1,34 @@
+name: Validate GuliKit APG sample
+
+on:
+  push:
+    paths:
+      - "verification/apg-sample-validator/**"
+      - ".github/workflows/validate-apg-sample.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-auto-apg:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Confirm sample file exists
+        run: |
+          test -f verification/apg-sample-validator/Auto.apg || {
+            echo "::error::Auto.apg is missing. Add the original sample to verification/apg-sample-validator/Auto.apg."
+            exit 1
+          }
+
+      - name: Validate Auto.apg binary sample
+        working-directory: verification/apg-sample-validator
+        run: node verify-apg.mjs Auto.apg

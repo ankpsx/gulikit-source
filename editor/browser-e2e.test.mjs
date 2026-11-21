@@ -294,6 +294,14 @@ test("official 17-step JSON auto-selects its audited profile and exports the exa
   });
   await page.locator(".step").nth(16).waitFor();
   assert.equal(await page.locator(".step").count(), 17);
+  const stepCards = page.locator(".step");
+  for (let i = 1; i < 17; i++) {
+    const summary = stepCards.nth(i).locator(".step-summary");
+    assert.equal(await summary.isVisible(), true, `official JSON step ${i + 1} must show its unselected key summary`);
+    assert.notEqual((await summary.textContent()).trim(), "", `official JSON step ${i + 1} summary must not be empty`);
+  }
+  assert.match(await stepCards.nth(1).locator(".step-summary").textContent(), /按键：/);
+  assert.match(await stepCards.nth(2).locator(".step-summary").textContent(), /摇杆：/);
   assert.equal(await page.locator("#layout").inputValue(), "SWITCH");
   assert.match(await page.locator("#sourceInfo").textContent(), /不限制步骤数量/);
   const downloadPromise = page.waitForEvent("download");

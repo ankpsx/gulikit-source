@@ -54,7 +54,7 @@ test("browser editor imports, edits, exports JSON and encodes APG", async t => {
   await assert.doesNotReject(() => page.locator(".step").nth(1).waitFor());
   assert.equal(await page.locator(".step").count(), 2);
   assert.equal(await page.locator("#steps").evaluate(el => getComputedStyle(el).gridTemplateColumns.split(" ").length), 1, "step cards must remain in one column");
-  assert.ok(await page.locator(".key-d-up").evaluate(el => el.getBoundingClientRect().top < document.querySelector(".key-d-down").getBoundingClientRect().top), "D-pad directions should follow controller positions");
+  assert.ok(await page.locator(".step").first().locator(".key-d-up").evaluate(el => el.getBoundingClientRect().top < document.querySelector(".step .key-d-down").getBoundingClientRect().top), "D-pad directions should follow controller positions");
   const first = page.locator(".step").nth(0);
   await first.locator(".delay").fill("250");
   await first.locator(".delay").dispatchEvent("change");

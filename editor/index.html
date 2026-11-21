@@ -22,6 +22,8 @@
         <label class="file">导入 APG<input id="apgFile" type="file" accept=".apg,.bin"></label>
         <label class="file secondary">导入 JSON<input id="jsonFile" type="file" accept=".json"></label>
         <button id="newConfig" class="secondary">新建宏</button>
+        <button id="exportJson" class="secondary">导出 JSON</button>
+        <button id="exportApg">导出 APG</button>
       </div>
       <div class="settings">
         <label>文件名<input id="fileName" value="macro"></label>
@@ -56,10 +58,6 @@
     </div>
 
     <section class="panel bottom">
-      <div class="toolbar">
-        <button id="exportJson" class="secondary">导出 JSON</button>
-        <button id="exportApg">导出 APG</button>
-      </div>
       <div id="status" role="status" class="status">就绪</div>
       <p class="muted small">APG 无法保证还原原始步骤边界和精确延时。未修改的来源记录会尽量原样复制；已修改的步骤会重新编码。导出前请检查警告。</p>
     </section>

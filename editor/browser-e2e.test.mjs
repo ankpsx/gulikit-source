@@ -13,7 +13,8 @@ async function startServer() {
   const server = createServer(async (req, res) => {
     try {
       const pathname = decodeURIComponent(new URL(req.url, "http://127.0.0.1").pathname);
-      const file = resolve(root, "." + pathname);
+      const relative = pathname.endsWith("/") ? pathname + "index.html" : pathname;
+      const file = resolve(root, "." + relative);
       if (file !== root && !file.startsWith(root + sep)) {
         res.writeHead(403).end("Forbidden");
         return;

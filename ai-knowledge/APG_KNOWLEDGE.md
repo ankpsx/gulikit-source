@@ -247,3 +247,107 @@ This is the main browser-side GuliKit macro editor. It builds the controller sel
 This source proves that APG output is a fixed 1,024-byte buffer populated with 18-byte step records, with a maximum of 56 complete records in this implementation. It also proves the broad categories of data written into each record. It does **not yet** establish the full header/trailer semantics, all byte offsets and encodings, the complete controller mapping table, or the hardware interpretation of the delay calculation. Keep those unresolved until the remaining deobfuscation and official-source cross-checks are complete.
 
 Audit tracker: `script_17.js` has received a first-pass functional and serializer review, but is **not yet marked fully audited**.
+
+
+## 11. Third-party APG implementation comparison — external lead, not official evidence
+
+Reference repository supplied by the user: https://github.com/hurui200320/GuliKitAPG
+- Repository default branch: `master`; repository metadata reports it as archived.
+- README describes the target as the GuliKit KingKong 2 Pro controller.
+- Relevant source files inspected:
+  - `src/main/kotlin/info/skyblond/gulikit/apg/APGFile.kt`
+  - `src/main/kotlin/info/skyblond/gulikit/apg/ControlWord.kt`
+  - `src/main/kotlin/info/skyblond/gulikit/apg/DPad.kt`
+  - `src/main/kotlin/info/skyblond/gulikit/generator/SplatoonCanvas.kt`
+- This is a third-party reverse-engineered implementation. It is recorded only as a comparison lead. It must not be used to promote any APG fact in Sections 3–5 to VERIFIED, because the official-source-only evidence policy remains in force.
+
+### 11.1 Third-party implementation's stated file model
+
+The third-party README and `APGFile.kt` describe a fixed array of 65,536 control words, each 16 bytes:
+- Total size: 65,536 × 16 = 1,048,576 bytes (1 MiB).
+- `APGFile.MAX_CONTROL_WORD = 65536`.
+- `APGFile.finish()` fills every unused word with a padding word.
+- `ControlWord.setPadding(true)` fills all 16 bytes with `0xFF`.
+- A normal word is initialized with zeroes except the final byte, which is `0x02`, and the four joystick axes are centered.
+
+### 11.2 Third-party 16-byte ControlWord layout
+
+Offsets below are directly visible in `ControlWord.kt`; meanings are the third-party author's interpretation:
+
+| Offset | Width | Third-party field | Status in this reference |
+|---|---:|---|---|
+| 0–1 | 2 | Left joystick horizontal, unsigned little-endian 12-bit value stored in 16 bits | Implemented by third party |
+| 2–3 | 2 | Left joystick vertical | Implemented by third party |
+| 4–5 | 2 | Right joystick horizontal | Implemented by third party |
+| 6–7 | 2 | Right joystick vertical | Implemented by third party |
+| 8 | 1 | Reserved/zero byte | Inferred from initialization/layout |
+| 9 | 1 | ZL linear value | Declared offset; setter requires further scrutiny |
+| 10 | 1 | Reserved/zero byte | Inferred from initialization/layout |
+| 11 | 1 | ZR linear value | Declared offset; setter requires further scrutiny |
+| 12 | 1 | Button group 1 | Implemented bit masks below |
+| 13 | 1 | Button group 2 | Implemented bit masks below |
+| 14 | 1 | D-pad enum | Implemented enum below |
+| 15 | 1 | Normal-word end marker `0x02`; padding uses `0xFF` | Implemented by third party |
+
+Joystick raw values are described as 0–4095, with 2048 centered; horizontal 0=left and 4095=right, vertical 0=down and 4095=up. The code maps signed logical values -2048..2047 to raw values by adding 2048 and writes little-endian 16-bit values.
+
+### 11.3 Third-party button masks
+
+At offset 12:
+- A = `0x01`
+- B = `0x02`
+- Y = `0x04`
+- X = `0x08`
+- L = `0x10`
+- R = `0x20`
+- ZL click = `0x40`
+- ZR click = `0x80`
+
+At offset 13:
+- Left stick click = `0x01`
+- Right stick click = `0x02`
+- Minus = `0x04`
+- Plus = `0x08`
+- Home = `0x10`
+- Screenshot = `0x20`
+- Upper two bits are marked unknown by the author.
+
+The third-party README says ABXY uses Nintendo layout (A right, B bottom, X top, Y left). This mapping is specific to that implementation and target context; do not assume it matches every official editor layout.
+
+### 11.4 Third-party D-pad enum
+
+The third-party `DPad.kt` implements:
+- 0: not pressed
+- 1: up
+- 2: up-right
+- 3: right
+- 4: down-right
+- 5: down
+- 6: down-left
+- 7: left
+- 8: up-left
+- 15: padding
+
+### 11.5 Important code-level caution
+
+In `ControlWord.kt`, both `zlLinear` and `zrLinear` setters call `mapJoystickWrite(value, offset)`, rather than `mapTriggerLinearWrite(value, offset)`. The joystick writer writes a 16-bit value after adding 2048, while the corresponding readers read only one byte. This appears inconsistent with the documented one-byte linear-trigger fields and may overwrite the adjacent reserved byte. Treat this as a likely implementation defect in the third-party code, not as evidence of the hardware format. Do not copy this setter behavior into a generator without independent validation.
+
+### 11.6 Comparison against current official web editor source
+
+Current official source inspected: `js/script_17.js`, blob SHA `60be095e889ef9a248882c2444513c9c74db8dfb`.
+- The current `generateAPGContent()` allocates `new Uint8Array(1024)`. The obfuscated arithmetic resolves to 1,024 bytes.
+- The record stride arithmetic resolves to 18 bytes.
+- The function therefore operates on a 1,024-byte buffer with at most 56 complete 18-byte records (16 bytes remain).
+- `exportAPG()` wraps the returned typed-array buffer in a Blob for download.
+- This source path is structurally different from the third-party fixed 1 MiB / 16-byte-word model.
+
+The user's observation that an actual generated `.apg` file is 1 MB remains important and is not invalidated by this source excerpt. The mismatch is still **UNRESOLVED**: determine whether the observed file came from the physical controller, a different editor build/version, another official export path, or a later packaging/transfer stage. Do not conflate the 1,024-byte browser buffer with the user's 1 MB file.
+
+### 11.7 Next comparison tasks
+
+1. Fully transcribe all 18 byte offsets and masks in official `generateAPGContent()`.
+2. Decode the obfuscated identifiers for every official button and stick direction.
+3. Compare the official 18-byte fields with the third-party 16-byte model field-by-field; explicitly identify added/removed/reserved bytes.
+4. Verify which APG generation/device families each structure applies to. The official page currently lists KK3, TT and Elves 2; the third-party README targets KingKong 2 Pro.
+5. Establish the provenance of the user's 1 MB file before reconciling the two sizes.
+6. Keep third-party facts labeled as external comparative evidence; only official GuliKit source can promote the canonical format/mapping registry to VERIFIED.

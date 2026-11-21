@@ -21,5 +21,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      - run: npm install --no-save --no-package-lock playwright
+      - run: npx playwright install --with-deps chromium
       - run: node --check editor/app.mjs
+      - run: node --test editor/browser-e2e.test.mjs
       - run: node --test codec/*.test.mjs editor/*.test.mjs

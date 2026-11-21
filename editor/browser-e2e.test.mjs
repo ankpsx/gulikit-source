@@ -39,6 +39,11 @@ test("browser editor imports, edits, exports JSON and encodes APG", async t => {
   const errors = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.goto(url);
+  const filePanel = page.locator("main > section.panel").first();
+  for (const action of ["#apgFile", "#jsonFile", "#exportJson", "#exportApg", "#newConfig"]) {
+    assert.equal(await filePanel.locator(action).count(), 1, `${action} must be available in the top file toolbar`);
+  }
+  assert.equal(await page.locator("main > section.panel.bottom #exportJson, main > section.panel.bottom #exportApg").count(), 0, "export actions must not be left at the bottom of the page");
   await page.locator("#jsonFile").setInputFiles({
     name: "fixture.json",
     mimeType: "application/json",

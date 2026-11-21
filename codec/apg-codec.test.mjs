@@ -156,3 +156,24 @@ test("negative delays produce no records; capacity overflow is reported", () => 
   assert.equal(overflow.recordCount, 2);
   assert.equal(overflow.truncated, true);
 });
+
+
+test("decoder can opt into conservative automatic record-range detection", async () => {
+  const { decodeAPGRecords } = await import("./apg-codec.mjs");
+  const encoded = encodeAPG({ macroList: [
+    { delay: 200, buttons: [{ id: "A" }], sticks: [] },
+    { delay: 200, buttons: [], sticks: [], isBlankDelay: true },
+  ] }, { metadata, fileSize: 1024, fillByte: 0xff });
+  const parsed = decodeAPGRecords(encoded.data, { autoDetectRecordCount: true, abxyLayout: "PC" });
+  assert.equal(parsed.recordCount, 32);
+  assert.equal(parsed.rangeDetection.status, "detected");
+  assert.equal(parsed.tail.length, 1024 - 32 * 18);
+});
+
+test("decoder refuses automatic detection when file evidence is ambiguous", async () => {
+  const { decodeAPGRecords } = await import("./apg-codec.mjs");
+  assert.throws(
+    () => decodeAPGRecords(new Uint8Array(1024).fill(0xff), { autoDetectRecordCount: true }),
+    /ambiguous; provide recordCount manually/,
+  );
+});

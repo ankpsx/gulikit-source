@@ -71,7 +71,11 @@ for (const layout of ["PC","SWITCH"]) {
     }
   }
   candidates[layout]={mismatchCount:mismatches.length,firstMismatches:mismatches};
-  check(mismatches.length===0, `JSON action states match APG using ${layout} layout`, mismatches.length?JSON.stringify(mismatches[0]):"all expected record states match");
+  if (layout === "SWITCH") {
+    check(mismatches.length===0, "official JSON action states match APG using SWITCH layout", mismatches.length?JSON.stringify(mismatches[0]):"all expected record states match");
+  } else {
+    report.push(`INFO PC layout comparison: ${mismatches.length ? "does not match (expected for this Switch-layout sample)" : "also matches"}${mismatches.length ? " — first difference " + JSON.stringify(mismatches[0]) : ""}`);
+  }
 }
 const markers = new Map();
 for(let i=0;i<recordCount;i++) markers.set(bytes[i*STRIDE+15],(markers.get(bytes[i*STRIDE+15])??0)+1);

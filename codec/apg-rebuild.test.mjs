@@ -25,7 +25,8 @@ test("copies unchanged source range byte-for-byte and appends generated step", (
   assert.equal(result.recordCount, 24);
   assert.deepEqual(result.data.slice(0, 16 * 18), firstRun);
   assert.equal(result.data[16 * 18 + 12], 0x08);
-  assert.deepEqual(result.data.slice(24 * 18), source.data.slice(32 * 18, 32 * 18 + (1024 - 24 * 18)));
+  assert.deepEqual(result.data.slice(24 * 18, 24 * 18 + (1024 - 32 * 18)), source.data.slice(32 * 18));
+  assert.ok(result.data.slice(24 * 18 + (1024 - 32 * 18)).every(byte => byte === 0xff));
 });
 
 test("supports delay changes by regenerating only the selected step", () => {
@@ -87,5 +88,6 @@ test("preserves the original suffix exactly when its full length fits", () => {
     recordCount: 32, metadata, abxyLayout: "PC", fillByte: 0xff,
     segments: [{ sourceStart: 0, sourceCount: 16 }],
   });
-  assert.deepEqual(result.data.slice(16 * 18), source.data.slice(32 * 18, 32 * 18 + (1024 - 16 * 18)));
+  assert.deepEqual(result.data.slice(16 * 18, 16 * 18 + (1024 - 32 * 18)), source.data.slice(32 * 18));
+  assert.ok(result.data.slice(16 * 18 + (1024 - 32 * 18)).every(byte => byte === 0xff));
 });

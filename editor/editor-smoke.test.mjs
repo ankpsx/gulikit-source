@@ -7,7 +7,7 @@ const app = await readFile(new URL("./app.mjs", import.meta.url), "utf8");
 const css = await readFile(new URL("./style.css", import.meta.url), "utf8");
 
 test("editor contains every required application control", () => {
-  for (const id of ["apgFile", "jsonFile", "newConfig", "fileName", "layout", "recordCount", "marker", "counterStart", "counterStep", "steps", "addAction", "addBlank", "exportJson", "exportApg", "status", "stepTemplate"]) {
+  for (const id of ["apgFile", "jsonFile", "newConfig", "fileName", "layout", "recordCount", "marker", "counterStart", "counterStep", "steps", "addAction", "addBlank", "clearSteps", "exportJson", "exportApg", "status", "stepTemplate"]) {
     assert.ok(html.includes(`id="${id}"`), `missing HTML id: ${id}`);
     assert.ok(app.includes(`$("${id}")`) || app.includes(`"${id}"`), `app does not reference: ${id}`);
   }

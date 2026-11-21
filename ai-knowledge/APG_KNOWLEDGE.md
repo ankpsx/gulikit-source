@@ -809,3 +809,71 @@ The deobfuscated arithmetic and direct source expressions establish:
 9. Add golden tests for 200 ms, non-200 ms, blank delay, simultaneous buttons/sticks, PC/Switch ABXY mapping, zero/very short/large delays, buffer capacity, and malformed JSON.
 
 This section records source-level findings from the audited official script_17.js and index.html plus the checked-in Auto.apg/macro.json pair. It does not claim that a complete APG parser or finished local GUI/serializer has already been implemented.
+
+
+## 19. 2026-11-21 follow-up: direct APG field and button-mask audit
+
+A second pass over the complete `generateAPGContent()` body in `js/script_17.js` independently checked the arithmetic expressions used for record construction. The source file blob SHA remains `60be095e889ef9a248882c2444513c9c74db8dfb`.
+
+### 19.1 Record layout confirmed from write expressions
+
+The serializer addresses the following byte positions relative to each 18-byte record:
+
+| Byte offset | Meaning | Evidence |
+|---|---|---|
+| 0-1 | Left stick X | 16-bit high byte then low byte |
+| 2-3 | Left stick Y | 16-bit high byte then low byte |
+| 4-5 | Right stick X | 16-bit high byte then low byte |
+| 6-7 | Right stick Y | 16-bit high byte then low byte |
+| 8-9 | LT trigger value | 16-bit high byte then low byte |
+| 10-11 | RT trigger value | 16-bit high byte then low byte |
+| 12 | First button bitmask | A/B/X/Y, LB/RB/LT/RT |
+| 13 | Second button bitmask | L3/R3 and additional controls |
+| 14 | D-pad value | Separate direction code |
+| 15 | Record marker | Source writes constant 0x02 |
+| 16-17 | Counter | 16-bit high byte then low byte |
+
+This confirms the 18-byte record layout at source level. The 1 MiB allocation is also directly expressed as a multiplication of two independently evaluated 1024 constants; it is not a 1024-byte buffer. The record width expression evaluates to 18.
+
+### 19.2 Button mask values calculated from source expressions
+
+The first mask is written at byte 12. The arithmetic expressions in the switch statement evaluate to:
+
+| Button | PC layout | Alternate layout |
+|---|---:|---:|
+| A | 0x02 | 0x01 |
+| B | 0x01 | 0x02 |
+| X | 0x08 | 0x04 |
+| Y | 0x04 | 0x08 |
+| LB | 0x10 | 0x10 |
+| RB | 0x20 | 0x20 |
+| LT | 0x40 | 0x40 |
+| RT | 0x80 | 0x80 |
+
+The second mask is written at byte 13. The source expressions calculate L3 = 0x02 and R3 = 0x01. Other second-mask cases are present in the same switch, but their identifiers still need to be mapped unambiguously before documenting their names.
+
+These are source-derived mask values, not guesses from the sample. The alternate layout is the non-PC branch in the official code; the UI's explicit layout setting must be preserved in the local application.
+
+### 19.3 Trigger and D-pad construction
+
+- The serializer initializes both trigger fields to zero for each record.
+- For a non-blank step, presence of button ID `LT` sets the LT field to 4095; presence of `RT` sets the RT field to 4095.
+- Blank-delay steps bypass button/stick processing, leaving both trigger fields at zero.
+- D-pad is stored separately at byte 14 and is derived from the selected D-pad button IDs. It is not merged into the two ordinary button masks.
+- The source emits the marker constant 0x02 at byte 15.
+- Counter is serialized as two bytes at offsets 16 and 17. Existing sample evidence remains counter start 11 and +14 per record; the exact source-side counter update/reset condition should receive a dedicated boundary test before treating that sequence as universal.
+
+### 19.4 Tail-fill expression
+
+The source's tail-fill arithmetic is `0x16b + (-0x955 * 4) + (0x49d * 8)`, which evaluates to decimal 5991. Assignment to a Uint8Array truncates this to its low byte, `5991 mod 256 = 0x67`. Thus the official source revision currently under audit fills the unused output buffer with 0x67. This does not resolve why the checked-in `Auto.apg` sample has an all-`0xFF` unused tail; that source/sample discrepancy remains open and must not be hidden by the implementation.
+
+### 19.5 Remaining work after this pass
+
+1. Decode the remaining second-mask case identifiers and document their exact button names and values.
+2. Decode and independently verify every D-pad code and the stick percentage-to-axis conversion, including sign, neutral center, clamping, and rounding.
+3. Verify counter progression and reset conditions across more than one 18-record boundary.
+4. Generate fresh official APG exports at several delay values and compare them byte-for-byte with a source-faithful local serializer.
+5. Investigate the 0x67 source tail versus 0xFF sample tail before choosing a compatibility policy.
+6. Expand the validator to test every byte field and delay/buffer edge case.
+
+This section is an additional source audit only. It does not claim that the local parser, serializer, or Windows GUI has been implemented.

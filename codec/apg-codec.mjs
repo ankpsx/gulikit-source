@@ -1,12 +1,12 @@
 import { detectAPGRecordRange } from "./apg-range-detect.mjs";
 
 /**
- * Conservative GuliKit APG encoder (first implementation).
+ * GuliKit APG encoder following the official webpage serializer.
  *
- * Evidence-backed payload fields are encoded from the shared macro model.
- * Record metadata is deliberately explicit: marker/counter policy is not yet
- * established across independent exports. The source-derived tail byte is
- * 0x67; callers may choose another byte when reproducing a known sample.
+ * JSON steps are encoded generically, without step-count or sample-signature
+ * gates. Official marker/counter and 0xFF container-fill defaults are applied
+ * automatically; PC/Switch ABXY interpretation remains a separate setting
+ * because the official JSON schema does not carry that choice.
  */
 
 export const APG_FILE_SIZE = 1024 * 1024;

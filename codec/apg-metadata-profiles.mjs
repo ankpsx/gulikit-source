@@ -46,6 +46,7 @@ export const OFFICIAL_29_STEPS_APG_PROFILE = Object.freeze({
     counterStart: 11,
     counterStep: 14,
   }),
+  abxyLayout: "SWITCH",
   evidence: Object.freeze({
     apgFile: "verification/apg-sample-validator/Official.29steps.apg",
     recordSize: 18,

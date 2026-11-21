@@ -58,3 +58,37 @@ test("editable model adapter can opt into automatic record-range detection", () 
   assert.equal(result.source.recordRangeDetection.status, "detected");
   assert.equal(result.config.macroList.length, 1);
 });
+
+
+test("all eight D-pad directions export official arrow labels and positions", () => {
+  const directions = [
+    ["D_UP", "↑", 0, 2],
+    ["D_DOWN", "↓", 2, 2],
+    ["D_LEFT", "←", 1, 0],
+    ["D_RIGHT", "→", 1, 4],
+    ["D_UP_LEFT", "↖", 0, 0],
+    ["D_UP_RIGHT", "↗", 0, 4],
+    ["D_DOWN_LEFT", "↙", 2, 0],
+    ["D_DOWN_RIGHT", "↘", 2, 4],
+  ];
+  const encoded = encodeAPG({
+    fileName: "dpad-eight-directions",
+    macroList: directions.map(([id], index) => ({
+      id: index + 1,
+      buttons: [button(id)],
+      sticks: [],
+      delay: 200,
+      isBlankDelay: false,
+    })),
+  }, { metadata, abxyLayout: "PC", fileSize: 8192 });
+  const result = apgToEditableModel(encoded.data, {
+    recordCount: encoded.recordCount,
+    abxyLayout: "PC",
+  });
+  assert.equal(result.config.macroList.length, 8);
+  for (const [index, [id, label, row, col]] of directions.entries()) {
+    assert.deepEqual(result.config.macroList[index].buttons[0], {
+      id, label, type: "button", position: { row, col },
+    });
+  }
+});

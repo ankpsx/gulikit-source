@@ -29,3 +29,17 @@ Open http://localhost:8000/editor/. The page loads only local ES modules and CSS
 - Reordering copied runs may create counter discontinuities; the result reports them instead of silently rewriting copied records.
 - APG tail fill and unknown device-specific metadata remain incompletely established. Review export warnings and test with independent device-generated files.
 - This is an experimental browser editor shell, not yet a packaged Windows EXE or validated device-write workflow.
+
+## Automated tests
+
+The GitHub Actions workflow installs Playwright Chromium and runs real-browser tests in addition to the codec unit tests.
+
+From the repository root, with Playwright and Chromium installed:
+
+```bash
+node --check editor/app.mjs
+node --test editor/browser-e2e.test.mjs
+node --test codec/*.test.mjs editor/*.test.mjs
+```
+
+Browser coverage currently includes JSON import/edit/export, APG encoding, byte-identical unchanged APG import/export, independent step delay and reorder controls, blank-delay conversion, and preserving an untouched APG run while another run is regenerated. The suite also checks that a growing record region relocates the original suffix and explicitly accounts for fixed-size output truncation.

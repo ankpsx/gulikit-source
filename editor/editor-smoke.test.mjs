@@ -16,7 +16,7 @@ test("editor contains every required application control", () => {
 test("step template exposes all controls queried by the editor", () => {
   for (const cls of ["step-title", "delay", "blank-note", "convert-action", "controls", "up", "down", "remove", "button-grid", "stick-grid", "source-meta"]) {
     assert.ok(html.includes(cls), `missing template class: ${cls}`);
-    assert.ok(app.includes(`"${cls}"`), `app does not query template class: ${cls}`);
+    assert.ok(app.includes(`".${cls}"`), `app does not query template class: ${cls}`);
   }
 });
 

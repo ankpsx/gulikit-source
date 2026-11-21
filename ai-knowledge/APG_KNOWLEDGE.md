@@ -175,3 +175,67 @@ The official `js/index.html` identifies the page as “GuliKit Macro editor” a
 - **Full audit completion remains 0/17** under the stricter completion criteria in the audit tracker.
 - This overview must not be interpreted as proof that all 17 files have been exhaustively analyzed or that APG format/mappings have been verified.
 - Next priority: deobfuscate `script_17.js`, trace each UI action through state changes to export/import code, and inspect `script_16.js` only as needed to establish any relationship with editor service calls.
+
+
+## 10. script_17.js — primary macro editor: first-pass functional analysis
+
+Source inspected: `js/script_17.js`, 4,430 lines, 234,346 characters, blob SHA `60be095e889ef9a248882c2444513c9c74db8dfb` (main at time of inspection). The file is heavily string-array obfuscated: identifiers such as `_0x2b8964` resolve strings through `_0x2c2b()`. The descriptions below distinguish directly visible behavior from details that still require full deobfuscation.
+
+### Overall purpose
+
+This is the main browser-side GuliKit macro editor. It builds the controller selection UI, maintains selected controls and an ordered macro-step list, supports delays and blank-delay steps, allows reordering/removal, imports/exports an editor JSON configuration, and generates/downloads APG binary data.
+
+### Main data model visible in source
+
+- `ButtonType`: separates ordinary buttons, sticks and triggers.
+- `gamepadButtons`: controller control catalogue with internal `id`, visible `label`, type and UI grid position. Visible entries include A/B/X/Y, LB/RB, LT/RT, L3/R3, additional system/menu controls and directional/diagonal directions. Some identifiers are hidden behind the obfuscation lookup and must be resolved before publishing a complete canonical mapping.
+- `gamepadSticks`: two stick controls, with identifiers and labels resolved through the string table.
+- `stickDirections`: eight directional states (UP/DOWN/LEFT/RIGHT and four diagonals); visible Chinese labels identify their directions.
+- `appState`: `selectedButtons`, `selectedSticks`, `stepDelay` (initial value 200), `blankDelay` (initial value 200), `macroList`, `fileName`, `abxyLayout`, and drag state.
+- A normal macro step is constructed with `id`, `buttons`, `sticks`, `delay`, `isBlankDelay:false`. A blank-delay step has empty `buttons` and `sticks`, a `delay`, and `isBlankDelay:true`.
+- Each selected stick entry is treated as a stick plus a direction (the code accesses a nested stick `id` and a direction `id`).
+
+### Functional groups and important functions
+
+| Function / group | Role |
+|---|---|
+| `initializeApp` | Locates required page elements, renders both panels, and registers event listeners. |
+| `renderLeftPanel`, `renderRightPanel` | Builds the control-selection and macro-list panels. |
+| `renderSelectionDisplay`, `renderSelectedItems`, `renderSelectionActions` | Displays current selections and their actions. |
+| `renderMacroList`, `renderMacroItem` | Displays ordered macro steps. |
+| `toggleButton`, `addStickToSelection`, `removeSelectedButton`, `removeSelectedStick`, `clearSelection` | Maintains selected controls. |
+| `updateSelectionUI`, `updateImageUI`, `updateAllImageUI`, `updateUIById`, `updateUIByStick`, `updateStackUI` | Synchronizes selected state with controller illustrations and UI. |
+| `addSelectionToMacro` | Copies current button/stick selections and current step delay into a new non-blank macro step, then clears the selection. |
+| `addBlankDelay` | Appends a step with no controls and `isBlankDelay:true`. |
+| `updateMacroItemDelay`, `removeMacroItem`, `clearMacroList` | Edits delays and removes/clears macro steps. |
+| `setAbxyLayout` | Changes the ABXY visual layout (including PC vs alternate layout) and updates control-image states. This is UI layout behavior; it does not by itself prove APG button encoding changes. |
+| `generateAPGContent` | Converts the in-memory macro list into a fixed-size `Uint8Array` for APG download. This is the key serialization function. |
+| `exportAPG` | Calls `generateAPGContent`, wraps the resulting bytes in a Blob, and downloads the APG file. |
+| `exportConfig` | Exports a separate JSON editor backup containing `fileName`, `macroList`, and `version`. This JSON backup is not the APG binary file. |
+| `importConfig` | Reads a JSON file with FileReader, parses it, checks for `fileName` and array-valued `macroList`, then restores those values into app state. This is editor-config import, not proof of APG binary import support. |
+| `initializeDragAndDrop` through `updateDataOrder` | Implements drag sorting, visual movement, auto-scroll and synchronization of the macro list's data order. |
+| `findMacroEditorAccessCount`, `mouseOverMacroEditorAccess` | Makes an asynchronous request related to macro-editor access/count; exact endpoint semantics need decoding and comparison with `script_16.js`. |
+
+### APG serialization facts established directly by `generateAPGContent`
+
+1. The function allocates a `Uint8Array` of **1,024 bytes**.
+2. It uses a per-step record stride of **18 bytes** (`0x12`).
+3. The output loop writes a record for each generated time slice of each macro step, in the order of `appState.macroList`.
+4. The number of generated slices for a step is calculated as `Math.ceil((delay - 79) / 1000)` from the visible integer expressions. This indicates a delay-to-record expansion/quantization rule in this implementation. Do not yet equate this with the hardware's playback clock or claim the unit is conclusively milliseconds without cross-checking official format documentation or known-good official APG samples.
+5. The loop stops when the record counter reaches the integer capacity `1024 / 18`; therefore at most **56 complete 18-byte records** can be written. The remaining 16 bytes cannot form another complete record.
+6. Unused bytes at the end of the allocated buffer are filled with zero.
+7. Each non-blank record encodes left-stick and right-stick directional values, trigger states (LT/RT), button bit fields, and a directional-pad value. The code constructs two button masks using bitwise OR and assigns values based on the selected control IDs; ABXY mask values depend on whether `appState.abxyLayout === 'PC'`.
+8. Blank-delay records skip the normal button/stick/trigger/d-pad population path, while still occupying generated record slots and carrying delay-related data.
+9. The exact byte offsets, byte order, numeric button bit assignments, stick numeric values and d-pad codes must be transcribed into the mapping table only after decoding the string table and independently checking every arithmetic expression. This first-pass summary intentionally does not guess those values.
+
+### Important distinction: two different export formats
+
+- **APG export**: binary `Uint8Array` generated by `generateAPGContent`, downloaded by `exportAPG`.
+- **Editor configuration export**: JSON object `{fileName, macroList, version}`, downloaded by `exportConfig`. The import function shown in this file reads this JSON structure.
+- Do not treat the JSON backup structure as the APG file structure.
+
+### Current conclusion / remaining work
+
+This source proves that APG output is a fixed 1,024-byte buffer populated with 18-byte step records, with a maximum of 56 complete records in this implementation. It also proves the broad categories of data written into each record. It does **not yet** establish the full header/trailer semantics, all byte offsets and encodings, the complete controller mapping table, or the hardware interpretation of the delay calculation. Keep those unresolved until the remaining deobfuscation and official-source cross-checks are complete.
+
+Audit tracker: `script_17.js` has received a first-pass functional and serializer review, but is **not yet marked fully audited**.

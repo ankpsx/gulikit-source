@@ -31,27 +31,29 @@
       <p id="sourceInfo" class="muted">JSON / 新建宏可直接导出任意步数 APG；Marker、Counter、记录数和尾部填充会按照官方序列化规则自动生成。JSON 不包含 ABXY 布局信息，默认使用 Switch，可自行切换。</p>
     </section>
 
-    <section class="panel">
-      <div class="section-head">
-        <div>
-          <h2>宏步骤</h2>
-          <p class="muted">每一步可单独设置延时，默认 200 ms；按键和摇杆可以同时选择。</p>
-        </div>
-        <div class="toolbar">
-          <button id="addAction">＋ 添加动作步骤</button>
-          <button id="addBlank" class="secondary">＋ 添加空白延时</button>
-          <button id="clearSteps" class="danger">清空列表</button>
-        </div>
-      </div>
-      <div id="steps" class="steps"><div class="empty">请导入 APG / JSON，或添加新步骤。</div></div>
-      <section id="stepEditor" class="step-editor hidden" aria-live="polite">
-        <div class="step-editor-head"><div><h3 id="activeStepTitle">当前编辑：未选择步骤</h3><p class="muted">整份宏共用这一张 Switch Pro 手柄布局图。选择步骤后，在此编辑按键与摇杆。</p></div></div>
+    <div class="editor-workspace">
+      <aside class="step-editor hidden" id="stepEditor" aria-live="polite">
+        <div class="step-editor-head"><div><h3 id="activeStepTitle">当前编辑：未选择步骤</h3><p class="muted">整份宏共用这一张 Switch Pro 手柄布局图。选择右侧步骤后，在此编辑按键与摇杆。</p></div></div>
         <div class="controls">
           <fieldset><legend>Switch Pro 手柄按键布局</legend><p class="control-hint">按实体手柄上的对应位置点选；方向键显示八方向状态（含斜向），已选按键会高亮。</p><div id="buttonGrid" class="button-grid" role="group" aria-label="Switch Pro 手柄按键选择"></div></fieldset>
           <fieldset><legend>摇杆方向与力度</legend><div id="stickGrid" class="stick-grid"></div></fieldset>
         </div>
+      </aside>
+      <section class="panel step-list-panel">
+        <div class="section-head">
+          <div>
+            <h2>宏步骤</h2>
+            <p class="muted">每一步可单独设置延时，默认 200 ms；按键和摇杆可以同时选择。</p>
+          </div>
+          <div class="toolbar">
+            <button id="addAction">＋ 添加动作步骤</button>
+            <button id="addBlank" class="secondary">＋ 添加空白延时</button>
+            <button id="clearSteps" class="danger">清空列表</button>
+          </div>
+        </div>
+        <div id="steps" class="steps"><div class="empty">请导入 APG / JSON，或添加新步骤。</div></div>
       </section>
-    </section>
+    </div>
 
     <section class="panel bottom">
       <div class="toolbar">

@@ -1,53 +1,35 @@
-# GuliKit APG Official Source Audit Progress
+# GuliKit 官方源码审计状态
 
-> Scope: audit only the official source code and official webpages in this repository. Do not use prior conversation conclusions, previous test reports, APG samples, or existing generators as technical evidence.
+> 本文件仅记录官方源码审计范围与未解决问题，不是软件需求文档，也不是 APG 格式知识库。完整、可执行的软件复现要求以 [AI 软件复现与开发规格](ai-knowledge/APG_KNOWLEDGE.md) 为唯一权威文档。
 
-## Overall progress
+## 当前审计结论
 
-- **JavaScript files fully audited:** 0 / 17
-- **Completion:** 0%
-- **Current phase:** source inventory and audit preparation
-- **Status:** In progress
+- 已从归档官方网页脚本中定位并审计 APG 生成逻辑：\`js/script_17.js\` 的 \`generateAPGContent()\`。
+- 已核对官方 serializer 的 18-byte record stride、1 MiB 输出容器、每步记录数公式、Marker、Counter、填充与主要控制状态编码。
+- 已使用 17 步和 29 步官方 JSON/APG 配对样本进行交叉验证；通用 encoder 的输出与这两组配对 APG 字节级一致。
+- 当前软件已实现任意步数 JSON → APG；不以 17/29 步样本 profile 作为导出门槛。
+- 以上结论仅表示 APG 生成相关路径已取得源码和样本交叉证据；**不表示归档目录内全部 17 个 JavaScript 文件均已逐个完整审计**。
 
-A file is counted as complete only after its relevant contents have been fully read and analyzed. Obfuscated logic must be decoded and verified against official source material before being marked complete.
+## 审计边界
 
-## JavaScript file checklist
+| 项目 | 状态 |
+|---|---|
+| 官方 APG serializer 相关逻辑 | 已审计并与配对样本交叉验证 |
+| APG 记录字段与控制状态映射 | 已审计；详见唯一知识库 |
+| 17/29 步配对样本 | 已完成字节级回归验证 |
+| 全部 17 个脚本逐个完整审计 | 未完成；不作 17/17 声明 |
+| 所有固件/控制器型号的 APG 变体 | 未完成 |
+| USB/Bluetooth 写入及硬件回放协议 | 当前产品不实现，未验证 |
+| 摇杆斜向编码的独立官方样本 | 待验证 |
 
-| File | Status | Notes |
-|---|---|---|
-| `script_01.js` | Pending full audit | Initial inspection suggests a Tailwind CSS bundle; not counted as complete. |
-| `script_02.js` | Pending | |
-| `script_03.js` | Pending | Initial inspection identifies a jQuery 3.6.3 header; not counted as complete. |
-| `script_04.js` | Pending | Initial inspection identifies a Lazy Load 1.9.3 header; not counted as complete. |
-| `script_05.js` | Pending | |
-| `script_06.js` | Pending | Initial inspection suggests a templating/library wrapper; role not yet verified. |
-| `script_07.js` | Pending | |
-| `script_08.js` | Pending | |
-| `script_09.js` | Pending | |
-| `script_10.js` | Pending | |
-| `script_11.js` | Pending | |
-| `script_12.js` | Pending | |
-| `script_13.js` | Pending | |
-| `script_14.js` | Pending — obfuscation found | Requires decoding and verification. |
-| `script_15.js` | Pending | |
-| `script_16.js` | Pending — obfuscation found | Requires decoding and verification. |
-| `script_17.js` | Pending — obfuscation found | Requires decoding and verification. |
+## 后续审计要求
 
-## Audit stages
+1. 若要声称某个官方脚本“完整审计”，必须记录文件名、实际审计范围、关键调用链和证据。
+2. 未完整审计的文件保持“未完成”，不能根据文件名、注释或局部片段推断其全部功能。
+3. 新发现的 serializer 行为必须先用官方源码定位，再用配对 APG 样本或可重复测试验证。
+4. 发现结论与唯一知识库冲突时，更新 \`ai-knowledge/APG_KNOWLEDGE.md\`，并在本文件记录审计范围；不要创建重复格式说明。
 
-1. Read and classify all 17 official JavaScript files.
-2. Trace the official webpage's script loading order and dependencies.
-3. Identify the code responsible for APG generation and trace its complete call/data flow.
-4. Decode obfuscated code; do not guess at unresolved behavior.
-5. Verify the APG file structure, headers, action data, timing values, frame layout, and file ending against official source material.
-6. Produce a new, self-contained Python implementation only after the mechanism is sufficiently established.
+## 最近更新
 
-## Evidence rules
-
-- Use the official repository source and official GuliKit webpages as the technical evidence base.
-- Do not use previous conversation content, previously uploaded reports, prior test results, or existing generator code as evidence or implementation material.
-- Clearly label unresolved questions; never present assumptions as verified facts.
-
-## Update log
-
-- Initial inventory created. No JavaScript file has yet passed the full-audit completion criteria.
+- 清除了旧文档中“0/17、0%”作为当前进度的过时表述。
+- 清除了“审计完成后制作独立 Python 生成器”的旧计划；当前产品架构是共享 JavaScript codec + 浏览器编辑器 + Electron Windows 封装。

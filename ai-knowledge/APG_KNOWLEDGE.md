@@ -1039,4 +1039,4 @@ The existing sample validator `verification/apg-sample-validator/verify-apg.mjs`
 
 The test derives the expected mask from the JSON step's selected button IDs, then verifies that every expected bit is present in the first normal-action record. Unknown button IDs contribute no second-mask bits, avoiding accidental assumptions about other controls.
 
-The validator file was updated and re-fetched from GitHub to verify the committed content. This is an additional cross-check on the supplied sample, not yet a complete generated-fixture test suite. A successful CI run for this exact validator commit is still required before marking the new assertion as runtime-tested.
+The validator file was updated and re-fetched from GitHub to verify the committed content. This is an additional cross-check on the supplied sample, not yet a complete generated-fixture test suite. GitHub Actions run #6 (run ID 44909198922), triggered by validator commit `d837b8bed88f6949ab9cca9b127372d6cc60929d`, completed with `success`. Therefore this new assertion has passed the repository's automated sample-validation workflow.

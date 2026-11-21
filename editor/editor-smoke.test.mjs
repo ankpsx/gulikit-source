@@ -32,7 +32,7 @@ test("all imported codec modules exist locally", async () => {
 test("editor is Simplified Chinese, local-first and responsive", () => {
   assert.match(html, /<html lang="zh-CN">/);
   for (const text of ["GuliKit APG 编辑器", "文件与格式设置", "导入 APG", "导入 JSON", "宏步骤", "添加动作步骤", "导出 JSON", "导出 APG"]) assert.ok(html.includes(text), `missing Simplified Chinese UI text: ${text}`);
-  assert.ok(!/[匯輸檔設為動作驅]/.test(html), "visible interface should not contain common Traditional Chinese characters");
+  assert.ok(!/[匯輸檔設為動驅]/.test(html), "visible interface should not contain common Traditional Chinese characters");
   assert.ok(!html.includes("https://") && !html.includes("http://"), "editor HTML must not load remote resources");
   assert.ok(html.includes('type="module" src="./app.mjs"'));
   assert.ok(css.includes("@media(max-width:900px)"));

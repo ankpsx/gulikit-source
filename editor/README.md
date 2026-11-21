@@ -1,45 +1,62 @@
-# GuliKit APG Editor (experimental)
+# GuliKit APG Editor
 
-A local-first browser UI for the APG codec modules in this repository.
+Offline-first editor for GuliKit macro JSON and APG files. The same codec and action model are used by the browser editor and the Windows Electron desktop application.
 
-## Run locally
+## Run the browser editor
 
 From the repository root:
 
-```bash
+\`\`\`bash
 python -m http.server 8000
-```
+\`\`\`
 
-Open http://localhost:8000/editor/. The page loads only local ES modules and CSS; no CDN, remote API, or account is required. Keep the repository's `codec/` directory beside `editor/`.
+Open http://localhost:8000/editor/. The editor uses local ES modules and CSS only; no CDN, remote API, login, or network service is required after the files are available locally.
 
-## Included workflows
+## Features
 
-- Import JSON and preserve its supported official fields; internal APG provenance metadata is omitted from exported JSON.
-- Import APG with PC/SWITCH interpretation, conservative record-range detection, or an explicit record count.
-- Edit each step's delay, button/D-pad/trigger selections, and cardinal stick direction/strength.
-- Add action steps and blank-delay steps; delete and reorder steps.
-- Export JSON or APG. Unchanged imported runs are copied byte-for-byte when provenance and baseline match; changed/new steps are regenerated.
-- For APG imports, marker/counter settings are inferred from the original record stream only when the marker is constant and the counter delta is constant. Enter all three values to override.
-- For JSON/new configurations, APG export requires explicit marker, counter start, and counter increment. No single-sample defaults are silently assumed.
+- Import official macro JSON and preserve supported fields and unknown JSON properties.
+- Import APG with PC/Switch ABXY interpretation and conservative record-range detection, or enter a record count manually.
+- Create, edit, delete, reorder, and clear action steps and blank-delay steps.
+- Edit each step's delay independently.
+- Select buttons, triggers, D-pad directions, and cardinal left/right stick directions with 0–100% strength.
+- Export official JSON.
+- Export APG for arbitrary macro step counts using the audited generic serializer rules; no 17-step/29-step profile gate.
+- Preserve unchanged imported APG record ranges byte-for-byte where provenance and baseline match; regenerate changed/new steps.
+- Report inferred delays, ambiguous record boundaries, counter discontinuities, and fixed-container truncation.
 
-## Important limitations
+## APG compatibility notes
 
-- APG-to-step reconstruction is inferred. Adjacent identical states may merge, and exact original boundaries or delay values may be unrecoverable.
-- Stick values are approximate inversions of quantized axes. Only cardinal directions are exposed.
-- Reordering copied runs may create counter discontinuities; the result reports them instead of silently rewriting copied records.
-- APG tail fill and unknown device-specific metadata remain incompletely established. Review export warnings and test with independent device-generated files.
-- This is an experimental browser editor shell, not yet a packaged Windows EXE or validated device-write workflow.
+- The UI defaults to Switch ABXY layout; JSON itself does not encode the PC/Switch choice.
+- The low-level \`encodeAPG()\` API defaults to PC unless \`abxyLayout\` is explicitly passed. The UI always passes the selected layout.
+- Official APG output uses a 1 MiB container, 18-byte records, Marker 0x02, Counter 11 then +14 modulo 16-bit, and 0xFF tail fill.
+- APG-to-JSON is lossy: APG does not retain original JSON step boundaries, arbitrary simultaneous directions, or exact millisecond delays.
+- Automatic APG record-range detection is heuristic. If ambiguous, enter recordCount manually.
+- The application does not write macros to controllers over USB/Bluetooth.
 
-## Automated tests
+## Run tests
 
-The GitHub Actions workflow installs Playwright Chromium and runs real-browser tests in addition to the codec unit tests.
+Node.js 22 is used in CI. Install Playwright temporarily and install Chromium:
 
-From the repository root, with Playwright and Chromium installed:
-
-```bash
+\`\`\`bash
+npm install --no-save --no-package-lock playwright
+npx playwright install chromium
 node --check editor/app.mjs
+node --check desktop/main.cjs
 node --test editor/browser-e2e.test.mjs
-node --test codec/*.test.mjs editor/*.test.mjs
-```
+node --test codec/*.test.mjs editor/editor-smoke.test.mjs
+\`\`\`
 
-Browser coverage currently includes JSON import/edit/export, APG encoding, byte-identical unchanged APG import/export, independent step delay and reorder controls, blank-delay conversion, and preserving an untouched APG run while another run is regenerated. The suite also checks that a growing record region relocates the original suffix and explicitly accounts for fixed-size output truncation.
+The repository currently does not define an \`npm test\` script.
+
+## Build the Windows x64 installer
+
+\`\`\`bash
+npm install
+npm run dist
+\`\`\`
+
+The NSIS installer is written to \`release/\`. CI workflow: \`.github/workflows/build-windows.yml\`.
+
+## Technical handoff
+
+The complete AI reproduction specification, verified APG format details, module responsibilities, acceptance criteria, and evidence boundaries are maintained in [ai-knowledge/APG_KNOWLEDGE.md](../ai-knowledge/APG_KNOWLEDGE.md).

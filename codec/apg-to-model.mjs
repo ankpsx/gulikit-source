@@ -136,7 +136,10 @@ export function apgToEditableModel(input, options = {}) {
 
   const decoded = decodeAPGSteps(input, { recordCount, abxyLayout, autoDetectRecordCount });
   const macroList = decoded.runs.map((run, index) => inferStep(run, index, preferredDelayMs));
-  const warnings = [...decoded.warnings];
+  const warnings = [...decoded.warnings,
+    "APG stores one D-pad direction and one signed value per stick axis. If the source JSON held multiple simultaneous directions on the same D-pad/stick axis (including opposite directions), the APG cannot retain the full combination; import can only recover the encoded axis/direction state.",
+    "APG records do not store original JSON step boundaries or exact millisecond delays. Adjacent identical states are merged into one inferred run, and delayMsRange is the full set of integer delays compatible with its record count.",
+  ];
   if (decoded.runs.some(run => run.delayMsExact === null)) {
     warnings.push("One or more step delays are ambiguous. Editable delay values are inferred; see apgSource.possibleDelayMs before accepting or changing them.");
   }

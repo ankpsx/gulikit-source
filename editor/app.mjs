@@ -90,6 +90,11 @@ function render(){
   if(!config.macroList.some(step=>step.id===activeStepId&&!step.isBlankDelay))activeStepId=config.macroList.find(step=>!step.isBlankDelay)?.id??null;
   config.macroList.forEach((step,i)=>{
     const n=$("stepTemplate").content.firstElementChild.cloneNode(true);n.draggable=true;n.classList.toggle("active-step",step.id===activeStepId);
+    n.setAttribute("aria-selected",String(step.id===activeStepId));
+    n.addEventListener("click",e=>{
+      if(step.isBlankDelay||e.target.closest("button,input,select,textarea,a,label"))return;
+      if(activeStepId!==step.id){activeStepId=step.id;render();}
+    });
     n.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",String(i));e.dataTransfer.effectAllowed="move";});
     n.addEventListener("dragover",e=>{e.preventDefault();e.dataTransfer.dropEffect="move";});
     n.addEventListener("drop",e=>{e.preventDefault();const from=Number(e.dataTransfer.getData("text/plain"));if(Number.isInteger(from)&&from!==i&&from>=0&&from<config.macroList.length){const [moved]=config.macroList.splice(from,1);config.macroList.splice(i,0,moved);render();}});
@@ -97,7 +102,7 @@ function render(){
     const delay=n.querySelector(".delay");delay.value=step.delay;delay.onchange=()=>step.delay=Number(delay.value);
     n.querySelector(".blank-note").classList.toggle("hidden",!step.isBlankDelay);
     n.querySelector(".convert-action").onclick=()=>{step.isBlankDelay=false;activeStepId=step.id;render();};
-    const edit=n.querySelector(".edit-step");edit.disabled=!!step.isBlankDelay;edit.textContent=step.id===activeStepId?"正在编辑":"编辑按键";edit.onclick=()=>{activeStepId=step.id;render();};
+    const edit=n.querySelector(".edit-step");edit.disabled=!!step.isBlankDelay;edit.textContent=step.id===activeStepId?"正在编辑":"选中并编辑";edit.onclick=()=>{activeStepId=step.id;render();};
     n.querySelector(".up").disabled=i===0;n.querySelector(".down").disabled=i===config.macroList.length-1;
     n.querySelector(".up").onclick=()=>move(i,-1);n.querySelector(".down").onclick=()=>move(i,1);
     n.querySelector(".remove").onclick=()=>{config.macroList.splice(i,1);if(activeStepId===step.id)activeStepId=null;render();};

@@ -70,11 +70,11 @@ test("browser editor imports, edits, exports JSON and encodes APG", async t => {
   const workspace = await page.locator(".editor-workspace").evaluate(el => {
     const editor = el.querySelector("#stepEditor").getBoundingClientRect();
     const steps = el.querySelector(".step-list-panel").getBoundingClientRect();
-    return { editorLeft: editor.left, editorRight: editor.right, stepsLeft: steps.left, stepsRight: steps.right, columns: getComputedStyle(el).gridTemplateColumns };
+    return { editorLeft: editor.left, editorRight: editor.right, editorTop: editor.top, stepsLeft: steps.left, stepsRight: steps.right, stepsTop: steps.top, columns: getComputedStyle(el).gridTemplateColumns };
   });
-  assert.ok(workspace.editorLeft < workspace.stepsLeft, "the shared controller editor must be positioned to the left of the step list");
-  assert.ok(workspace.editorRight <= workspace.stepsRight, "the step list must occupy the right-hand column");
-  assert.equal(workspace.columns.split(" ").length, 2, "desktop workspace must use two columns");
+  assert.ok(workspace.editorTop < workspace.stepsTop, "the shared controller editor must be above the step list");
+  assert.ok(workspace.editorLeft <= workspace.stepsLeft && workspace.editorRight >= workspace.stepsRight, "the controller editor must span the step-list width");
+  assert.equal(workspace.columns.split(" ").length, 1, "workspace must use one column with controller above steps");
   await first.locator(".delay").fill("250");
   await first.locator(".delay").dispatchEvent("change");
   await page.locator("#buttonGrid label").filter({ hasText: /^B$/ }).locator("input").check();
@@ -303,7 +303,7 @@ test("official 17-step JSON auto-selects its audited profile and exports the exa
   await page.locator(".step").nth(16).waitFor();
   assert.equal(await page.locator(".step").count(), 17);
   const stepCards = page.locator(".step");
-  for (let i = 1; i < 17; i++) {
+  for (let i = 0; i < 17; i++) {
     const summary = stepCards.nth(i).locator(".step-summary");
     assert.equal(await summary.isVisible(), true, `official JSON step ${i + 1} must show its unselected key summary`);
     assert.notEqual((await summary.textContent()).trim(), "", `official JSON step ${i + 1} summary must not be empty`);
@@ -344,8 +344,8 @@ test("unselected action steps show readable button and stick summaries", async t
   await cards.nth(0).waitFor();
   assert.match(await cards.nth(1).locator(".step-summary").textContent(), /按键：L、ZR/);
   assert.match(await cards.nth(2).locator(".step-summary").textContent(), /空白延时：无按键或摇杆/);
-  assert.equal(await cards.nth(0).locator(".step-summary").isVisible(), false, "active step uses the shared controller editor instead of a text summary");
+  assert.equal(await cards.nth(0).locator(".step-summary").isVisible(), true, "active step must keep its text summary visible");
   await cards.nth(1).locator(".step-title").click();
-  assert.equal(await cards.nth(1).locator(".step-summary").isVisible(), false);
+  assert.equal(await cards.nth(1).locator(".step-summary").isVisible(), true);
   assert.match(await cards.nth(0).locator(".step-summary").textContent(), /按键：A、B、方向键↑；摇杆：左摇杆上 75%/);
 });

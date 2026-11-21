@@ -151,12 +151,14 @@ export function encodeAPG(config, options = {}) {
   const recordCapacity = Math.floor(fileSize / APG_RECORD_SIZE);
   const output = new Uint8Array(fileSize).fill(fillByte);
   let recordIndex = 0;
+  let requestedRecordCount = 0;
   let counter = metadata.counterStart;
 
   for (const step of config.macroList) {
     // Same expression as the official editor. Negative delays produce no
     // iterations in its loop; validation above only rejects non-finite values.
     const count = Math.ceil((step.delay * APG_RECORDS_PER_SECOND_FACTOR) / 1000);
+    if (count > 0) requestedRecordCount += count;
     const state = actionState(step, abxyLayout);
 
     for (let i = 0; i < count; i++) {
@@ -183,9 +185,8 @@ export function encodeAPG(config, options = {}) {
   return {
     data: output,
     recordCount: recordIndex,
-    truncated: recordIndex === recordCapacity &&
-      config.macroList.some(step =>
-        Math.ceil((step.delay * APG_RECORDS_PER_SECOND_FACTOR) / 1000) > 0),
+    requestedRecordCount,
+    truncated: requestedRecordCount > recordCapacity,
     warnings: [
       "Marker/counter values are supplied by the caller; their universal APG rule is not yet proven.",
       "The encoder implements verified cardinal stick directions only; diagonal stick entries are ignored, matching the audited serializer switch.",

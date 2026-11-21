@@ -1,4 +1,4 @@
-name: Purge reports history
+name: Purge reports and apg-tools history
 
 on:
   workflow_dispatch:
@@ -23,12 +23,12 @@ jobs:
           python -m pip install --user git-filter-repo
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-      - name: Remove reports from every reachable commit
+      - name: Remove reports and apg-tools from every reachable commit
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          git filter-repo --path reports/ --invert-paths --force
+          git filter-repo --path reports/ --path apg-tools/ --invert-paths --force
           git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push --force --all origin
           git push --force --tags origin

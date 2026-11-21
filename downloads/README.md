@@ -52,4 +52,4 @@ Get-FileHash .\\GuliKit-APG-Editor-Windows-x64.zip -Algorithm SHA256
 - Actions Artifact 有保存期限，不是永久下载地址。到期后需重新运行 Windows installer workflow。
 - CI 构建成功不等于已在用户电脑实机安装和验收。
 - 本程序目前是 APG/JSON 离线文件编辑器，不支持通过 USB/Bluetooth 写入或回放控制器宏。
-- 如需长期发布，应创建 GitHub Release 并上传经过用户验收的安装程序。
+- 正式 Release 的自动构建与 EXE 上传已配置在 `.github/workflows/build-windows.yml`；推送版本 Tag 后执行。

@@ -120,29 +120,27 @@ function validateConfig(config) {
 /**
  * Encode a JSON/editor configuration into the official 1 MiB APG container.
  *
- * metadata is required because marker/counter conventions have only been
- * cross-checked against one supplied APG sample so far:
- *   { marker: 2, counterStart: 11, counterStep: 14 }
+ * Official marker/counter metadata and 0xFF fill are applied by default.
  *
  * Options:
  *   abxyLayout: "PC" | "SWITCH" (default "PC")
- *   metadata: required marker/counter profile
- *   fillByte: source expression resolves to 0x67; default 0x67
+ *   metadata: optional override for a confirmed alternate container variant
+ *   fillByte: optional tail-fill override; default 0xFF
  *   fileSize: default 1 MiB; useful for tests, never exceed official size
  */
 export function encodeAPG(config, options = {}) {
   validateConfig(config);
   const {
     abxyLayout = "PC",
-    metadata,
-    fillByte = 0x67,
+    metadata = OFFICIAL_APG_METADATA,
+    fillByte = OFFICIAL_APG_FILL_BYTE,
     fileSize = APG_FILE_SIZE,
   } = options;
 
   if (!metadata || !Number.isInteger(metadata.marker) ||
       !Number.isInteger(metadata.counterStart) ||
       !Number.isInteger(metadata.counterStep)) {
-    throw new TypeError("metadata.marker, metadata.counterStart and metadata.counterStep are required integers");
+    throw new TypeError("metadata.marker, metadata.counterStart and metadata.counterStep must be integers");
   }
   if (abxyLayout !== "PC" && abxyLayout !== "SWITCH") {
     throw new TypeError('abxyLayout must be "PC" or "SWITCH"');

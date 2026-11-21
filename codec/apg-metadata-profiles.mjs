@@ -47,11 +47,14 @@ export const OFFICIAL_29_STEPS_APG_PROFILE = Object.freeze({
     counterStep: 14,
   }),
   abxyLayout: "SWITCH",
+  fillByte: 0xff,
   evidence: Object.freeze({
     apgFile: "verification/apg-sample-validator/Official.29steps.apg",
     recordSize: 18,
     recordCount: 464,
     apgSha256: "c51b5b280ac4ba442b8cd8327c4b2068ed13efbb08a80293c3dc97ae194b5c07",
+    tailLength: 1040224,
+    tailFillByte: 0xff,
   }),
 });
 

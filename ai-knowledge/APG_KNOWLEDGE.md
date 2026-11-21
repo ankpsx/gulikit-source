@@ -351,3 +351,65 @@ The user's observation that an actual generated `.apg` file is 1 MB remains impo
 4. Verify which APG generation/device families each structure applies to. The official page currently lists KK3, TT and Elves 2; the third-party README targets KingKong 2 Pro.
 5. Establish the provenance of the user's 1 MB file before reconciling the two sizes.
 6. Keep third-party facts labeled as external comparative evidence; only official GuliKit source can promote the canonical format/mapping registry to VERIFIED.
+
+
+## 10A. script_17.js — deeper 18-byte record offset trace (partial)
+
+Source: `generateAPGContent()` in `js/script_17.js`, same inspected blob SHA `60be095e889ef9a248882c2444513c9c74db8dfb`. The obfuscated arithmetic expressions for the record stride and each indexed write have been evaluated. This establishes the offsets below; semantic labels are based on the variables and surrounding control flow and remain subject to final deobfuscation review.
+
+| Record-relative offset | Width | Current interpretation | Evidence/status |
+|---|---:|---|---|
+| 0–1 | 2 | Left stick horizontal value; high byte then low byte | PARTIALLY VERIFIED |
+| 2–3 | 2 | Left stick vertical value; high byte then low byte | PARTIALLY VERIFIED |
+| 4–5 | 2 | Right stick horizontal value; high byte then low byte | PARTIALLY VERIFIED |
+| 6–7 | 2 | Right stick vertical value; high byte then low byte | PARTIALLY VERIFIED |
+| 8–9 | 2 | LT selected state value; high byte then low byte; code sets 0 or 4095 | PARTIALLY VERIFIED |
+| 10–11 | 2 | RT selected state value; high byte then low byte; code sets 0 or 4095 | PARTIALLY VERIFIED |
+| 12 | 1 | First button bitmask | PARTIALLY VERIFIED |
+| 13 | 1 | Second button bitmask | PARTIALLY VERIFIED |
+| 14 | 1 | D-pad direction code | PARTIALLY VERIFIED |
+| 15 | 1 | Constant `0x02` | VERIFIED as a written constant in this serializer |
+| 16–17 | 2 | Rolling per-record counter; high byte then low byte | PARTIALLY VERIFIED |
+
+Important details:
+- The first four 16-bit axis values are written high byte first, then low byte (big-endian byte order in this serializer). This differs from the third-party `ControlWord.kt` implementation, which explicitly reads/writes joystick values little-endian.
+- The LT and RT values are each set to 0 when not selected and 4095 when selected in this serializer. They occupy two bytes apiece, unlike the third-party model's one-byte linear trigger fields at offsets 9 and 11.
+- The two button masks are written at offsets 12 and 13.
+- The D-pad code is written at offset 14; offset 15 is written as `0x02`.
+- The 16-bit value written at offsets 16–17 starts at 11, increases by 14 for each record after the first, and resets to 11 when it exceeds 65535. Its hardware meaning is not yet established; call it a rolling counter, not a confirmed time unit.
+- The loop's record stride is 18 bytes, and the buffer is 1,024 bytes, so only 56 complete records fit.
+
+### Official button mask values decoded from arithmetic
+
+First mask at record offset 12:
+- A: PC layout = `0x02`; alternate layout = `0x01`.
+- B: PC layout = `0x01`; alternate layout = `0x02`.
+- X: PC layout = `0x08`; alternate layout = `0x04`.
+- Y: PC layout = `0x04`; alternate layout = `0x08`.
+- LB = `0x10`.
+- RB = `0x20`.
+- LT = `0x40`.
+- RT = `0x80`.
+
+Second mask at record offset 13:
+- L3 = `0x02`.
+- R3 = `0x01`.
+- Three further control cases resolve numerically to `0x04`, `0x08`, and `0x10`; their visible control names still need string-table decoding before being added to the canonical button registry.
+
+### D-pad numeric values
+
+The eight non-neutral D-pad cases in the serializer assign the numeric values 1 through 8 in the conventional order:
+- UP = 1
+- DOWN = 5
+- LEFT = 7
+- RIGHT = 3
+- UP-LEFT = 8
+- UP-RIGHT = 2
+- DOWN-LEFT = 6
+- DOWN-RIGHT = 4
+
+Neutral initializes to 0. These numeric values match the third-party `DPad.kt` enum, but the agreement is comparative evidence only; the official values above are derived from the official serializer's own switch branches.
+
+### Explicit remaining uncertainty
+
+The exact helper-function identities used for every high-byte/low-byte operation and the obfuscated names for the final three controls still need a complete string-table decode. The 16-bit counter's device-side meaning is unknown. No conclusion is made that the official 18-byte record is a universally applicable APG standard.

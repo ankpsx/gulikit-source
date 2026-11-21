@@ -99,7 +99,7 @@ function inferStep(run, index, preferredDelayMs) {
  * otherwise the minimum valid integer delay. Pass preferredDelayMs to override.
  */
 export function apgToEditableModel(input, options = {}) {
-  const { recordCount, abxyLayout, fileName = "imported-apg", preferredDelayMs } = options;
+  const { recordCount, abxyLayout, fileName = "imported-apg", preferredDelayMs, autoDetectRecordCount = false } = options;
   if (abxyLayout !== "PC" && abxyLayout !== "SWITCH") {
     throw new TypeError('abxyLayout must be explicitly "PC" or "SWITCH"');
   }
@@ -108,7 +108,7 @@ export function apgToEditableModel(input, options = {}) {
     throw new TypeError("preferredDelayMs must be a finite non-negative number");
   }
 
-  const decoded = decodeAPGSteps(input, { recordCount, abxyLayout });
+  const decoded = decodeAPGSteps(input, { recordCount, abxyLayout, autoDetectRecordCount });
   const macroList = decoded.runs.map((run, index) => inferStep(run, index, preferredDelayMs));
   const warnings = [...decoded.warnings];
   if (decoded.runs.some(run => run.delayMsExact === null)) {
@@ -126,6 +126,7 @@ export function apgToEditableModel(input, options = {}) {
     config: { fileName, version: "1.0", macroList },
     source: {
       recordCount: decoded.recordCount,
+      recordRangeDetection: decoded.rangeDetection,
       tailHex: hex(decoded.tail),
       trailingFragmentHex: hex(decoded.trailingFragment),
       fidelity: "editable inferred model; raw APG record bytes retained per step and tail retained separately",

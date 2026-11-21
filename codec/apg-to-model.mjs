@@ -87,6 +87,14 @@ function inferStep(run, index, preferredDelayMs) {
       markerValues: [...new Set(run.records.map(item => item.marker))],
       counterStart: run.records[0]?.counter ?? null,
       counterEnd: run.records.at(-1)?.counter ?? null,
+      // Exact editable snapshot used to decide whether raw source records can
+      // be copied unchanged during a later rebuild.
+      baseline: {
+        buttons: JSON.parse(JSON.stringify(buttons)),
+        sticks: JSON.parse(JSON.stringify(sticks)),
+        delay: chosenDelay,
+        isBlankDelay: buttons.length === 0 && sticks.length === 0,
+      },
     },
   };
 }

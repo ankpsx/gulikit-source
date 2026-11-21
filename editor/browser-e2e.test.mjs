@@ -67,6 +67,16 @@ test("browser editor imports, edits, exports JSON and encodes APG", async t => {
   assert.ok(pos.x.y < pos.b.y && pos.y.x < pos.a.x, "ABXY must follow Switch Pro positions: X top, A right, B bottom, Y left");
   assert.ok(pos.l3.x < pos.r3.x, "left stick press must be left of right stick press");
   assert.equal(await page.locator("#stickGrid").count(), 1, "the page must have one shared stick editor");
+  const workspace = await page.locator(".editor-workspace").evaluate(el => {
+    const editor = el.querySelector("#stepEditor").getBoundingClientRect();
+    const steps = el.querySelector(".step-list-panel").getBoundingClientRect();
+    return { editorLeft: editor.left, editorRight: editor.right, stepsLeft: steps.left, stepsRight: steps.right, columns: getComputedStyle(el).gridTemplateColumns };
+  });
+  if (window.innerWidth > 1100) {
+    assert.ok(workspace.editorLeft < workspace.stepsLeft, "the shared controller editor must be positioned to the left of the step list");
+    assert.ok(workspace.editorRight <= workspace.stepsRight, "the step list must occupy the right-hand column");
+    assert.equal(workspace.columns.split(" ").length, 2, "desktop workspace must use two columns");
+  }
   await first.locator(".delay").fill("250");
   await first.locator(".delay").dispatchEvent("change");
   await page.locator("#buttonGrid label").filter({ hasText: /^B$/ }).locator("input").check();

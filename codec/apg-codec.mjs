@@ -1,3 +1,5 @@
+import { detectAPGRecordRange } from "./apg-range-detect.mjs";
+
 /**
  * Conservative GuliKit APG encoder (first implementation).
  *
@@ -228,7 +230,18 @@ function readU16BE(bytes, offset) {
  */
 export function decodeAPGRecords(input, options = {}) {
   const bytes = input instanceof Uint8Array ? input : new Uint8Array(input);
-  const { recordCount, abxyLayout } = options;
+  const { abxyLayout, autoDetectRecordCount = false } = options;
+  let { recordCount } = options;
+  let rangeDetection = null;
+
+  if (recordCount === undefined && autoDetectRecordCount) {
+    rangeDetection = detectAPGRecordRange(bytes);
+    if (rangeDetection.status !== "detected") {
+      throw new Error("APG record range is ambiguous; provide recordCount manually. " +
+        rangeDetection.warnings.join(" "));
+    }
+    recordCount = rangeDetection.recordCount;
+  }
 
   if (!Number.isInteger(recordCount) || recordCount < 0) {
     throw new TypeError("recordCount must be supplied as a non-negative integer");
@@ -301,6 +314,7 @@ export function decodeAPGRecords(input, options = {}) {
   return {
     recordCount,
     records,
+    rangeDetection,
     tail: bytes.slice(recordBytes),
     trailingFragment: bytes.slice(capacity * APG_RECORD_SIZE),
     warnings,
@@ -356,10 +370,12 @@ export function decodeAPGSteps(input, options = {}) {
   return {
     runs,
     recordCount: decoded.recordCount,
+    rangeDetection: decoded.rangeDetection,
     tail: decoded.tail,
     trailingFragment: decoded.trailingFragment,
     warnings: [
       ...decoded.warnings,
+      ...(decoded.rangeDetection?.warnings ?? []),
       "Runs are inferred from adjacent identical controller-state bytes; separate neighbouring steps with identical states cannot be distinguished.",
       "Original delay is not uniquely recoverable in general; delayMsRange is the integer-millisecond range consistent with the official 79-records/second ceiling formula.",
       "Marker/counter bytes are excluded from state comparison; original record bytes remain available in each run.",

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { encodeAPG, APG_RECORD_SIZE, DPAD } from "./apg-codec.mjs";
+import { encodeAPG, decodeAPGSteps, APG_RECORD_SIZE, DPAD } from "./apg-codec.mjs";
 
 const metadata = { marker: 2, counterStart: 11, counterStep: 14 };
 const record = (bytes, n = 0) =>
@@ -91,4 +91,40 @@ test("record parser requires explicit record count and preserves counter/marker"
   assert.equal(parsed.records[0].marker, 2);
   assert.equal(parsed.records[0].counter, 11);
   assert.equal(parsed.records[0].raw.length, 18);
+});
+
+
+test("high-level run grouping reports delay ranges, not fabricated exact delays", () => {
+  const config = { macroList: [
+    { delay: 200, buttons: [{ id: "A" }], sticks: [] },
+    { delay: 200, buttons: [], sticks: [] },
+  ] };
+  const encoded = encodeAPG(config, { metadata, fileSize: 1024, fillByte: 0xff });
+  const decoded = decodeAPGSteps(encoded.data, { recordCount: 32, abxyLayout: "PC" });
+  assert.equal(decoded.runs.length, 2);
+  assert.equal(decoded.runs[0].recordCount, 16);
+  assert.deepEqual(decoded.runs[0].delayMsRange, { min: 190, max: 202 });
+  assert.equal(decoded.runs[0].delayMsExact, null);
+  assert.deepEqual(decoded.runs[1].delayMsRange, { min: 190, max: 202 });
+  assert.match(decoded.warnings.join(" "), /cannot be distinguished/);
+});
+
+test("adjacent identical action states are merged and explicitly marked ambiguous", () => {
+  const config = { macroList: [
+    { delay: 13, buttons: [{ id: "A" }], sticks: [] },
+    { delay: 13, buttons: [{ id: "A" }], sticks: [] },
+  ] };
+  const encoded = encodeAPG(config, { metadata, fileSize: 128, fillByte: 0xff });
+  const decoded = decodeAPGSteps(encoded.data, { recordCount: 2, abxyLayout: "PC" });
+  assert.equal(decoded.runs.length, 1);
+  assert.equal(decoded.runs[0].recordCount, 2);
+  assert.match(decoded.warnings.join(" "), /identical states/);
+});
+
+test("delay inverse range is exact for one-record run", () => {
+  const encoded = encodeAPG({ macroList: [{ delay: 1, buttons: [], sticks: [] }] },
+    { metadata, fileSize: 18 });
+  const decoded = decodeAPGSteps(encoded.data, { recordCount: 1 });
+  assert.deepEqual(decoded.runs[0].delayMsRange, { min: 1, max: 12 });
+  assert.equal(decoded.runs[0].delayMsExact, null);
 });

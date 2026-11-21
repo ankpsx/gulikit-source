@@ -925,3 +925,46 @@ The exact intermediate conversion order (multiplication/division) and final sign
 4. Add the complete D-pad table and confirmed second-mask values to the validator after the remaining names are resolved.
 
 No APG parser, serializer, or GUI implementation is claimed by this research update.
+
+
+## 21. 2026-11-21 follow-up: exact stick-magnitude arithmetic and overwrite semantics
+
+A focused re-read of the stick loop in the official `generateAPGContent()` body yields an additional exact arithmetic result.
+
+### 21.1 Intermediate magnitude expression
+
+The source computes the magnitude using `Math.round` around a helper-wrapped expression whose arithmetic literals reduce to:
+
+- numerator multiplier: `0x1d95 + 0x2644 - 0x4375 = 100`
+- denominator: `0x455 + 0xbc * 0x1c - 0xe * 0x135 = 2047`
+
+The helper aliases in the function object identify multiplication and division operations, so the intermediate is equivalent to:
+
+`Math.round(value * 100 / 2047)`
+
+This is the exact source expression after constant folding. It should not yet be simplified into a claimed 0-100-to-full-axis mapping: the JSON `value` domain and the directional add/subtract helper calls must be validated together. For example, the sample's `value: 100` must be reconciled with the resulting small intermediate before the final axis range can be asserted.
+
+### 21.2 Axis accumulator initialization
+
+All four accumulators initialize to 2048 for each record:
+- left X accumulator
+- left Y accumulator
+- right X accumulator
+- right Y accumulator
+
+The eight direction branches each use a base expression that constant-folds to 2048, then combine it with the computed magnitude using one of the helper-wrapped arithmetic operations. This confirms the neutral baseline independently for all four axes. The final write remains big-endian at offsets 0-7.
+
+### 21.3 Selected-stick iteration and conflict behavior
+
+The serializer iterates `selectedSticks` in array order and assigns the corresponding axis accumulator inside that loop. It does not visibly combine two directions into a vector by summing components. If two selected entries target the same stick axis (for example UP and DOWN on the same stick), the later matching entry assigns that accumulator after the earlier one; therefore the last matching direction in the array wins for that axis. This is a source control-flow observation and should be covered by a regression test.
+
+### 21.4 Remaining uncertainty
+
+The complete mapping of byte-13 bits `0x04`, `0x08`, and `0x10` to named controls is still unresolved pending reliable decoding of the string-table rotation and switch labels. The directional arithmetic helper calls also need to be decoded to establish exact sign and scaling semantics. No unsupported claim is made here about endpoint values, clamping, or out-of-range input behavior.
+
+### 21.5 Next verification targets
+
+1. Decode the string-table rotation deterministically and resolve the three remaining byte-13 control names.
+2. Determine the exact add/subtract direction for all eight stick branches and reconcile `value: 100` against observed exports.
+3. Test duplicate/conflicting stick directions to confirm last-write-wins behavior against generated files.
+4. Add source-derived tests for axis neutral 2048, magnitude rounding, direction sign, and conflicting entries.

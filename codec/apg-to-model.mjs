@@ -57,7 +57,7 @@ function inferStickEntries(axes) {
     const delta = axes[axis] - 2048;
     if (delta !== 0 && Math.sign(delta) === sign) {
       // The original input value is not uniquely recoverable after rounding.
-      const value = Math.abs(delta) * 2047 / 100;
+      const value = Math.abs(delta) * 100 / 2047;
       entries.push({
         stick: { id: stickId, label: stickId === "L_STICK" ? "Left Stick" : "Right Stick", type: "stick" },
         direction,

@@ -144,6 +144,9 @@ test("browser step controls support defaults, independent delay, reorder and bla
   assert.equal(exported.macroList.length, 2);
   assert.equal(exported.macroList[0].delay, 420);
   assert.equal(exported.macroList[0].isBlankDelay, false);
+  await page.locator("#clearSteps").click();
+  assert.equal(await page.locator(".step").count(), 0);
+  assert.match(await page.locator("#status").textContent(), /宏列表已清空/);
 });
 
 test("editing one imported APG run preserves the untouched run and relocates the suffix", async t => {

@@ -656,3 +656,55 @@ This section is the current actionable backlog for completing the user-confirmed
 The project is complete only when a user can independently open an APG file and export its contents to JSON, open/edit JSON and generate an APG file, edit parsed APG actions and export them again without unintended information loss, and run these workflows in the packaged Windows application offline. Any unsupported or unverified APG fields must be disclosed rather than guessed.
 
 **Maintenance rule:** Keep this backlog and all APG project knowledge in this single file, `ai-knowledge/APG_KNOWLEDGE.md`. Do not create a second knowledge file, dated copy, or parallel specification. Update checklist items only when implementation or verification evidence exists, and re-fetch the file after each GitHub update to confirm the change.
+
+
+---
+
+## 16. Official-source audit — first pass (2026-11-21)
+
+This is a source-derived preliminary audit of the current repository copies of the official GuliKit macro editor. It takes precedence over assumptions inferred only from the sample binary where the two disagree, but it does not yet resolve why the current source and the archived sample differ.
+
+### Official files re-fetched
+
+- `js/script_17.js` — official macro editor source, mapped by `js/script_list.txt` to `https://macro.gulikit.com/./js/macroEditor.js`. Current repository blob SHA: `60be095e889ef9a248882c2444513c9c74db8dfb`; 234,346 characters.
+- `js/index.html` — official page entry. Current repository blob SHA: `916814fd8695c1f0dc5b94ffc174c13baf8aa9d1`.
+- `js/script_16.js` — official `http.js` helper. Current repository blob SHA: `01873c3ffbe31b57cd32446c76531ee9d2fddd2a`.
+- `js/script_list.txt` maps `script_17.js` to the official `macroEditor.js` URL and `script_16.js` to `http.js`.
+
+### Findings directly visible in the official source
+
+1. **The official macro editor generates APG but its built-in import path is JSON configuration import.**
+   - `generateAPGContent()` creates a `Uint8Array`, and `exportAPG()` wraps its buffer in an APG download Blob.
+   - `exportConfig()` serializes `fileName`, `macroList`, and `version` to JSON.
+   - `importConfig()` uses `FileReader.readAsText()`, parses the content with `JSON.parse()`, and requires a `fileName` plus an array-valued `macroList`.
+   - The page binds its import-file input to `importConfig`. The inspected editor source has no `readAsArrayBuffer()`, `parseAPG()`, or binary APG import routine. Therefore the official page's “Import File” function must not be represented as proof that it can read APG binaries.
+   - The inspected `http.js` helper contains no APG parser or APG-specific keyword path. Its role is separate from the binary serializer.
+
+2. **Current official serializer allocates a 1 MiB output buffer.**
+   - In `generateAPGContent()`, the two operands passed to the local multiplication helper each evaluate to 1,024; their product is 1,048,576 bytes.
+   - This is source evidence for a 1 MiB allocation in the currently fetched official script, not a 1,024-byte output allocation.
+
+3. **Current official serializer explicitly fills the unused tail with byte `0x67`.**
+   - After writing records, a loop fills every remaining byte from the end of the written records to the end of the allocated buffer.
+   - The fill expression evaluates to decimal 5,991; assignment to a `Uint8Array` truncates it to the low byte, `0x67`.
+   - This conflicts with the archived sample observation that its tail is all `0xFF`. Do not silently reconcile these observations. Investigate whether the sample came from a different official editor revision, a different export path, or another transformation. Until then, treat the fill byte as source-version-specific and the `0xFF` tail as sample-specific.
+
+4. **The source loop uses 18-byte records.**
+   - The serializer computes each record base as a record index multiplied by 18 and writes fields at offsets within that record.
+   - The source writes axis values as two bytes each, two trigger values as two bytes each, button masks, a D-pad value, a fixed marker byte, and a two-byte rolling counter. The exact complete field mapping still needs a line-by-line decoded audit.
+
+5. **The delay expansion expression requires careful validation against the sample.**
+   - The visible expression for the per-action record count is `Math.ceil(delay * 259 / 1000)` after evaluating the obfuscated integer constants in the current source.
+   - This is the expression present in the fetched script; it must not yet be promoted to a universal timing rule because the archived 200 ms sample's previously observed record count does not straightforwardly match this result.
+   - Re-check the actual state property feeding this expression, the exact per-step loop behavior, and sample provenance before implementing the delay conversion. Do not substitute a guessed 16-record-per-200-ms rule.
+
+### Immediate follow-up investigation
+
+- [ ] Decode the official obfuscation table systematically so every property name, control identifier, and serializer branch is readable and independently auditable.
+- [ ] Verify the source-derived 1 MiB buffer and `0x67` tail behavior by running a controlled export from the current official page or obtaining a current official-generated file, if possible without asking the user.
+- [ ] Explain the current-source `0x67` tail versus archived-sample `0xFF` tail discrepancy with version/provenance evidence.
+- [ ] Trace the exact property used for per-action duration and all calculations that determine record count.
+- [ ] Decode every control mapping, including all stick directions and the five currently unresolved secondary-mask controls, from official UI state through serializer writes.
+- [ ] Inspect all other official page scripts and linked resources only where they can affect macro state, APG serialization, file import, or export.
+
+**User-provided material policy:** Do not ask the user for another file or sample while the needed information can still be obtained from official GuliKit source, official page resources, or the repository's existing samples. Ask only after documenting which official sources were checked and exactly what missing fact cannot be established from them.

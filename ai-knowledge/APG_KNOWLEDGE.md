@@ -73,7 +73,7 @@
 | 50 | 29 步配对样本：ABXY | A/B/X/Y 的 byte 12 值分别为 0x01/0x02/0x04/0x08，与 Switch 布局一致。 | 官方配对样本确认 |
 | 51 | 29 步配对样本：尾部 | 有效记录后全部为 0xFF；此 0xFF 填充配置只用于匹配该配对样本，不能覆盖官方 serializer 其他版本或其他文件的尾部规则。 | 官方 29 步 APG 二进制扫描确认 |
 | 52 | 29 步配对样本：profile | 配套 JSON 动作序列匹配时，专用 profile 为 marker=2、counterStart=11、counterStep=14、abxyLayout=SWITCH、fillByte=0xFF。不得对其他 JSON 自动套用。 | 本地 profile 模块与配对 APG 二进制证据 |
-| 53 | JSON→APG 配对导出 | 本地浏览器 E2E 已将 Official.29steps.json 导入编辑器并导出 APG，逐字节比较配套 Official.29steps.apg；该浏览器测试通过。 | Chromium E2E Run 44934183766 的 browser E2E 步骤通过；不等于官方网页人工验收或真实设备验收 |
+| 53 | JSON→APG 配对导出 | 本地浏览器 E2E 将 Official.29steps.json 导入编辑器并导出 APG，逐字节比较配套 Official.29steps.apg；配对导出测试通过。 | GitHub Actions Run 44934334389：Chromium E2E 5/5、Node tests 58/58；不等于官方网页人工验收或真实设备验收 |
 | 54 | 自动套用 profile 的边界 | 编辑器只在 29 步数量、步骤顺序、动作 ID、摇杆方向/力度、delay=200 与 isBlankDelay=false 均符合配对动作签名时自动套用该专用 profile；修改/其他 JSON 不应套用。 | codec/apg-metadata-profiles.mjs 与对应测试 |
 | 55 | 本地动作模型 | codec/action-model.mjs 统一普通步骤、空白延时、JSON normalize、逐步延时更新和 JSON 导出；默认新步骤 200 ms，导入 delay 不应被静默重置，未知 JSON 字段应保留。 | 本地实现与测试 |
 | 56 | APG Encoder/Decoder | codec/apg-codec.mjs 实现 18-byte 编码、1 MiB 容器、摇杆/扳机/按键/D-pad、PC/Switch 布局、显式 metadata、原始记录解析与尾部保留。 | 本地实现；具体保证以对应测试范围为准 |
@@ -84,6 +84,7 @@
 | 61 | 摇杆 UI 输入 | 编辑器摇杆力度输入范围为 0–100%，步进 1；标签显示百分比。 | editor/app.mjs 当前实现 |
 | 62 | Windows 桌面封装 | Electron + NSIS Windows x64 安装程序；renderer 使用 contextIsolation、sandbox，Node integration 关闭；本地资源服务绑定 127.0.0.1。 | desktop/main.cjs 与 package.json；CI 构建成功不等于用户设备验收 |
 | 63 | 设备连接/写入 | 当前程序不支持通过 USB 或 Bluetooth 将宏写入控制器。 | 当前产品范围 |
+| 64 | 最新 CI 与 Windows 构建 | 提交 `759d1d98500f2e07132d863198845af3461d03c3` 的 APG codec workflow 通过：Chromium E2E 5/5、Node tests 58/58；Windows x64 NSIS 构建成功并上传 Artifact `GuliKit-APG-Editor-Windows-x64`，Artifact ID `14719135987`，ZIP 大小 111,387,602 bytes，SHA-256 `b308373170a07f4b58e247717bafab687664b9e3eb4e67095237a38cbdc0644f`，有效期至 2026-12-05 18:14:51 UTC。 | Run [44934334389](https://github.com/ankpsx/gulikit-source/actions/runs/44934334389)；Windows 构建 Run [44934334346](https://github.com/ankpsx/gulikit-source/actions/runs/44934334346)。runner 构建成功不等于用户电脑实机安装验收 |
 
 ## 3. 已确认的摇杆换算规则（重点）
 

@@ -431,3 +431,19 @@ The exact helper-function identities used for every high-byte/low-byte operation
 - UNRESOLVED: why the user-confirmed browser export is approximately 1 MiB while the inspected `script_17.js` serializer allocates 1,024 bytes.
 - Do not assume 1 MiB is a controller-wide APG format specification, and do not claim that the 1,024-byte allocation is the complete observed APG file.
 - Next investigation should inspect all files in the repository's `js/` directory and trace every export-related call path, then compare that complete source behavior with the user's actual exported file if binary evidence becomes available.
+
+
+### Section 12 follow-up — complete page/export path audit (2026-11-21)
+
+The page and archive were rechecked beyond the serializer function:
+
+1. **Page entry and script order:** `js/index.html` contains the APG editor UI and loads `./js/http.js` followed by `./js/macroEditor.js`. The HTML's remaining inline scripts handle page presentation/language/site behavior; the inspected HTML does not define a second APG serializer or a second export handler.
+2. **Archive inventory:** the complete GitHub API listing of `js/` contains `index.html`, `script_01.js` through `script_17.js`, `script_list.txt`, and a two-byte readme. There is no second archived macro-editor script or separate APG export module in this directory. `script_list.txt` maps `script_17.js` to `https://macro.gulikit.com/./js/macroEditor.js`.
+3. **Export call path:** in `script_17.js`, `exportAPG()` calls `generateAPGContent()`, constructs `new Blob([returnedTypedArray.buffer], ...)`, creates an object URL, assigns it to a temporary anchor's `href`, sets the download filename, clicks the anchor, removes it, and revokes the object URL. There is no visible concatenation, padding-to-1-MiB, network fetch, or second payload appended between the generated buffer and Blob construction in this function.
+4. **Buffer allocation arithmetic:** the obfuscated allocation expression evaluates to 1,024 bytes. The record stride expression evaluates to 18 bytes. The serializer returns that same typed array; the Blob is built from its backing `ArrayBuffer`. Thus, for this exact inspected source path and assuming an ordinary unmodified `Uint8Array`, the Blob payload length is 1,024 bytes.
+5. **Separate HTTP helper:** archived `script_16.js` maps to `http.js`; it defines a JSON request helper and AES-GCM encryption for requests to `game.gulikit.com`. Its `new Uint8Array(0xc)` is a 12-byte cryptographic IV, not an APG buffer. No APG serialization or APG Blob export was found in this helper.
+6. **Separate config export:** `exportConfig()` serializes `fileName`, `macroList`, and `version` as JSON and downloads a configuration file. It is not the APG binary export path.
+
+**Updated conclusion:** the inspected downloaded-source snapshot provides no second export route or in-page size-expansion step that explains the user's approximately 1 MiB download. The mismatch is now narrower: either the actual browser session used a different/different-revision asset than this archived snapshot, or there is another factor not represented in the inspected page/source files. These are hypotheses, not findings. The user's reported approximately 1 MiB download remains a confirmed observation and must not be re-labelled as 1,024 bytes.
+
+**Still unresolved:** no binary sample of the actual 1 MiB download has been inspected, so its exact byte count, header/footer, padding pattern, record count, and relationship to the 1,024-byte source-generated buffer are unknown. Do not claim that the 1,024-byte buffer is the full real-world APG file.

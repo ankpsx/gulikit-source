@@ -413,3 +413,20 @@ Neutral initializes to 0. These numeric values match the third-party `DPad.kt` e
 ### Explicit remaining uncertainty
 
 The exact helper-function identities used for every high-byte/low-byte operation and the obfuscated names for the final three controls still need a complete string-table decode. The 16-bit counter's device-side meaning is unknown. No conclusion is made that the official 18-byte record is a universally applicable APG standard.
+
+## Section 12 — 1 MiB browser-export discrepancy (2026-11-21)
+
+### User-confirmed provenance
+- The user confirms that the approximately 1 MB .apg file was downloaded by clicking 「导出 APG 文件」 in the official GuliKit web editor, not copied from the controller's USB storage.
+- Therefore, the 1 MiB result must be treated as a real observation of the browser editor's download output. Do not explain it away as the third-party project's hardware-storage layout.
+
+### Current source mismatch
+- The currently mirrored js/script_17.js contains generateAPGContent() allocating new Uint8Array(1024), and exportAPG() wraps the returned typed array in a Blob. This code path therefore appears to produce a 1,024-byte download, not 1 MiB.
+- The observed browser download and the mirrored source cannot both describe the same exact execution path/version unless there is an additional transformation, alternate loaded script, or other packaging step not yet found.
+- The official editor is indexed at https://macro.gulikit.com/?language=2; web search confirms the page's export feature and stated support for KK3, TT, and Elves 2 APG-capable firmware. A direct page fetch in this investigation failed, and targeted web searches did not expose the live script URL/content.
+- The repository's js/script_17.js commit history shows an initial uploaded file on 2026-11-19; this repository is a source mirror, not proof that the currently served production asset is byte-for-byte identical.
+
+### Status / next verification
+- UNRESOLVED: why the live official editor download is approximately 1 MiB while the mirrored serializer allocates 1,024 bytes.
+- Do not assume 1 MiB is a controller-wide APG format specification, and do not assume the live editor uses the mirrored 18-byte-record serializer.
+- Best next evidence: inspect the actual downloaded 1 MiB file's byte structure and metadata, or obtain the live page's loaded JavaScript asset and compare its serializer to the mirror. The user's downloaded file can be uploaded directly for binary analysis.

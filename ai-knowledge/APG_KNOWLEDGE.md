@@ -86,7 +86,8 @@
 | 63 | 设备连接/写入 | 当前程序不支持通过 USB 或 Bluetooth 将宏写入控制器。 | 当前产品范围 |
 | 64 | 最新 CI 与 Windows 构建 | 提交 `759d1d98500f2e07132d863198845af3461d03c3` 的 APG codec workflow 通过：Chromium E2E 5/5、Node tests 58/58；Windows x64 NSIS 构建成功并上传 Artifact `GuliKit-APG-Editor-Windows-x64`，Artifact ID `14719135987`，ZIP 大小 111,387,602 bytes，SHA-256 `b308373170a07f4b58e247717bafab687664b9e3eb4e67095237a38cbdc0644f`，有效期至 2026-12-05 18:14:51 UTC。 | Run [44934334389](https://github.com/ankpsx/gulikit-source/actions/runs/44934334389)；Windows 构建 Run [44934334346](https://github.com/ankpsx/gulikit-source/actions/runs/44934334346)。runner 构建成功不等于用户电脑实机安装验收 |
 | 65 | 官方网页实际导入验收 | 用户已实际在 GuliKit 官方网页导入本项目导出的 29 步 JSON，并确认导入验收成功；本轮验收目标为摇杆力度与 D-pad 八方向箭头在官方网页中正确显示。 | 用户实际操作反馈；属于官方网页人工验收，尚未包含控制器硬件执行/回放验证 |
-| 66 | 官方 JSON→APG 通用导出 | 已实现通用导出路径：不论步骤数量，按每步 ceil(delay_ms×79/1000) 生成 18-byte 记录；自动写入 Marker=0x02、Counter=11/+14/16-bit 回绕、1 MiB 容器与 0xFF 尾部，不再要求用户填写元数据或匹配固定步数 profile。网页 JSON 不含 ABXY 配置，界面默认 Switch（与 17/29 步官方配对样本一致），仍保留 PC/Switch 切换。 | 官方源码确认通用序列化规则；两组配对样本字节级回归与 37 步浏览器 E2E 已加入，等待 CI 最终结果及用户在官方网页实测 |
+| 66 | 官方 JSON→APG 通用导出 | 已实现通用导出路径：不论步骤数量，按每步 ceil(delay_ms×79/1000) 生成 18-byte 记录；自动写入 Marker=0x02、Counter=11/+14/16-bit 回绕、1 MiB 容器与 0xFF 尾部，不再要求用户填写元数据或匹配固定步数 profile。网页 JSON 不含 ABXY 配置，界面默认 Switch（与 17/29 步官方配对样本一致），仍保留 PC/Switch 切换；超出 1 MiB 容量时界面显示截断警告。 | 官方源码确认通用序列化规则；17/29 步配对文件字节级比较通过，37 步任意长度浏览器 E2E 通过；CI Run 44938706631：Chromium E2E 7/7、Node tests 60/60 |
+| 67 | 17 步配對樣本 | Official.17steps.json 共 17 步；配对 APG SHA-256=4e00caeb6de9ce6cdb30dd667de6af09a27ff619ec888316d3b3f6dc19049373；有效记录 777 条；尾部 1,034,590 bytes 为 0xFF；与通用 encoder 导出逐字节一致。 | 官方 JSON/APG 配对样本与本地 CI 测试确认；仅作为回归样本，不是固定步数限制 |
 
 ## 3. 已确认的摇杆换算规则（重点）
 
@@ -124,9 +125,9 @@
 
 ## 5. 通用 JSON→APG 要求与目前未完成的验收
 
-1. **通用官方 JSON→APG 导出**：已完成第一版通用实现，导出不再匹配固定步数 profile，也不要求手动填写 Marker/Counter/尾部填充；已加入 17/29 步配对二进制逐字节测试和 37 步任意长度浏览器 E2E。仍需等待 CI 全绿，并由用户将新程序生成的任意步数 APG 导入官方网页实测。ABXY 是 JSON 未包含的外部配置，当前默认 Switch，PC 可手动切换；不能声称程序可从 JSON 自动识别该字段。
+1. **通用官方 JSON→APG 导出**：第一版通用实现已通过 CI：Chromium E2E 7/7、Node tests 60/60；17/29 步配对 APG 均逐字节一致，37 步任意长度 JSON 的浏览器导出通过。导出不匹配固定步数 profile，不要求手动填写 Marker/Counter/尾部填充；超出 1 MiB 时会提示截断。仍需由用户将新程序生成的任意步数 APG 导入官方网页实测。ABXY 是 JSON 未包含的外部配置，当前默认 Switch，PC 可切换；不能声称程序可从 JSON 自动识别该字段。
 2. **Windows 用户实机验收**：GitHub Windows runner 构建成功不等于用户电脑安装、启动和导入导出成功；仍需用户实际安装验收。
-3. **APG 元数据与尾部通用规则**：官方网页 serializer 源码现已确认 Marker=0x02、Counter 起点 11/每条 +14、尾部 0xFF；两组配对样本一致。若未来出现其他网页版本/固件变体，再按新证据扩展，不得覆盖当前已确认规则。
+3. **APG 元数据与尾部通用规则**：官方网页 serializer 源码现已确认 Marker=0x02、Counter 起点 11/每条 +14（16-bit 回绕）、尾部 0xFF；17/29 两组配对样本一致。若未来出现其他网页版本/固件变体，再按新证据扩展，不得覆盖当前已确认规则。
 4. **斜向摇杆**：官方 serializer 当前已审计分支没有明确的斜向合成逻辑；需要官方 UI 导出样本。
 5. **损坏/未知格式文件**：需继续验证未知 marker、未知 D-pad、截断文件、非对齐尾部、Counter 中断等情况的警告和保留策略。
 6. **USB/Bluetooth 写入**：当前不支持，不得在界面或说明中暗示已支持。

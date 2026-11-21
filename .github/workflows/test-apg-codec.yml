@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: 22
       - run: npm install --no-save --no-package-lock playwright
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium > /tmp/playwright-install.log 2>&1 || (tail -n 100 /tmp/playwright-install.log; exit 1)
       - run: node --check editor/app.mjs
       - run: node --test editor/browser-e2e.test.mjs
       - run: node --test codec/*.test.mjs editor/*.test.mjs

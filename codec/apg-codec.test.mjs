@@ -128,3 +128,31 @@ test("delay inverse range is exact for one-record run", () => {
   assert.deepEqual(decoded.runs[0].delayMsRange, { min: 1, max: 12 });
   assert.equal(decoded.runs[0].delayMsExact, null);
 });
+
+
+test("stick value coercion and overflow follow the serializer arithmetic", () => {
+  const encodeAxis = value => {
+    const bytes = encodeAPG({ macroList: [{ delay: 13, buttons: [], sticks: [
+      { stick: { id: "L_STICK" }, direction: "RIGHT", ...(value === undefined ? {} : { value }) },
+    ] }] }, { metadata, fileSize: 18 }).data;
+    return u16(record(bytes), 0);
+  };
+  assert.equal(encodeAxis(undefined), 2048);
+  assert.equal(encodeAxis(-2047), 1948);
+  assert.equal(encodeAxis(0.5), 2048);
+  assert.equal(encodeAxis(2047), 2148);
+  assert.equal(encodeAxis(1000000), (2048 + Math.round(1000000 * 100 / 2047)) & 0xffff);
+  assert.equal(encodeAxis(null), 2048);
+});
+
+test("negative delays produce no records; capacity overflow is reported", () => {
+  const negative = encodeAPG({ macroList: [{ delay: -100, buttons: [], sticks: [] }] },
+    { metadata, fileSize: 36 });
+  assert.equal(negative.recordCount, 0);
+  assert.equal(negative.requestedRecordCount, 0);
+  const overflow = encodeAPG({ macroList: [{ delay: 40, buttons: [], sticks: [] }] },
+    { metadata, fileSize: 36 });
+  assert.equal(overflow.requestedRecordCount, 4);
+  assert.equal(overflow.recordCount, 2);
+  assert.equal(overflow.truncated, true);
+});

@@ -141,7 +141,7 @@ test("stick value coercion and overflow follow the serializer arithmetic", () =>
   assert.equal(encodeAxis(-2047), 1948);
   assert.equal(encodeAxis(0.5), 2048);
   assert.equal(encodeAxis(2047), 2148);
-  assert.equal(encodeAxis(1000000), (2048 + Math.round(1000000 * 100 / 2047)) & 0xffff);
+  assert.equal(encodeAxis(2000000), (2048 + Math.round(2000000 * 100 / 2047)) & 0xffff);
   assert.equal(encodeAxis(null), 2048);
 });
 

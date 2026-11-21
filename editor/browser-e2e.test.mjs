@@ -55,7 +55,7 @@ test("browser editor imports, edits, exports JSON and encodes APG", async t => {
   const first = page.locator(".step").nth(0);
   await first.locator(".delay").fill("250");
   await first.locator(".delay").dispatchEvent("change");
-  await first.locator(".button-grid label").filter({ hasText: "B" }).locator("input").check();
+  await first.locator(".button-grid label").filter({ hasText: /^B$/ }).locator("input").check();
   const jsonDownloadPromise = page.waitForEvent("download");
   await page.locator("#exportJson").click();
   const jsonDownload = await jsonDownloadPromise;

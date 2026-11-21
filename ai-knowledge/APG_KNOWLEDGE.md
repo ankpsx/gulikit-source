@@ -139,3 +139,39 @@ Third-party descriptions, forum posts, reverse-engineered assumptions, prior gen
 ## 8. Change log
 
 - 2026-11-21: Created this single canonical AI knowledge file. Initial repository audit tracker states 0/17 JavaScript files fully audited; no APG byte layout or complete button mapping is certified yet.
+
+
+## 9. JavaScript file role overview (preliminary source reading)
+
+The following descriptions are based on reading the corresponding files in the repository and checking the official page's script inventory/loading context. They are **role summaries, not full audits**. A file being classified as a general-purpose library does not prove that it has no indirect effect on the editor. The three obfuscated files remain subject to decoding and call-chain verification.
+
+| File | Brief purpose | APG relevance / audit priority |
+|---|---|---|
+| `script_01.js` — `tailwindcss.js` | Tailwind CSS browser/runtime bundle used for utility-style page styling. | Low direct relevance; presentation layer, not currently identified as APG serialization logic. |
+| `script_02.js` — `layui.js` | Layui 2.11.2 UI framework, including modules for forms, layers, sliders, tabs, upload and other interface widgets. | Medium indirect relevance: may provide editor controls and event/UI behavior; inspect only where the macro editor uses its APIs. |
+| `script_03.js` — `jquery-3.6.3.min.js` | jQuery 3.6.3 DOM, event, AJAX and utility library. | Medium indirect relevance: editor handlers may use jQuery; library itself is not the APG format definition. |
+| `script_04.js` — `jquery.lazyload.min.js` | jQuery Lazy Load 1.9.3 plugin for deferring image loading until images approach the viewport. | Low relevance; page presentation/performance. |
+| `script_05.js` — `smart.animation.min.js` | Site-builder animation/layout helper; exposes animation-related behavior such as `smartH$` and jQuery animation plugins. | Low relevance unless editor controls explicitly depend on its layout behavior. |
+| `script_06.js` — `kino.razor.min.js` | Razor-like client-side template parser/renderer; converts template strings with variables, conditions and loops into render functions. | Low-to-medium indirect relevance if editor UI is rendered through these templates; no APG byte format established here. |
+| `script_07.js` — `common.min.js` | Shared GuliKit site/page behavior: navigation, responsive/layout handling, language switching and common UI interactions. | Medium indirect relevance; page integration and language labels may surround the editor, but this is not yet proven to encode APG actions. |
+| `script_08.js` — `admin.validator.min.js` | Adds `$.wezhan` validation helpers for email, mobile, numeric, text and related input validation. | Low relevance; generic form validation. |
+| `script_09.js` — `jquery.cookie.js` | jQuery Cookie Plugin 1.4.1 for reading, writing and deleting browser cookies. | Low relevance unless editor preferences/session state are stored through it; no APG serialization role identified. |
+| `script_10.js` — `jquery.jqueryzoom.js` | jQuery image-zoom plugin that displays a magnified image on hover and preloads the zoom image. | Low relevance; image presentation. |
+| `script_11.js` — `minHeight.js` | Sets minimum heights of page containers from the browser viewport height and updates them on window resize. | Low relevance; page layout only. |
+| `script_12.js` — `prefixfree.min.js` | Prefix-free CSS compatibility helper; detects browser CSS prefixes and rewrites/registers prefixed CSS rules. | Low relevance; styling compatibility. |
+| `script_13.js` — `bootstrap.bundle.min.js` | Bootstrap 5.3.3 bundled JavaScript components, including dropdowns, modals, tabs, tooltips and related UI behavior. | Medium indirect relevance if editor UI uses Bootstrap components; not the APG data model itself. |
+| `script_14.js` — `generateColor.js` | Obfuscated color utility code; visible decoded string/function clues include color/background styling, RGB/hex conversion and color lightening. | Low APG relevance; needs deobfuscation confirmation, but appears to concern visual color generation rather than macro records. |
+| `script_15.js` — `iro.min.js` | iro.js 5.5.2 color-picker library, exposing color and color-picker UI components. | Low APG relevance; color selection/presentation. |
+| `script_16.js` — `http.js` | Obfuscated HTTP helper defining an async `request` wrapper around `fetch`, JSON handling, and AES-GCM encryption for POST payloads; embedded service base is `https://game.gulikit.com/gulikit`. | Medium investigation priority for network behavior/security and possible account/service calls; no evidence yet that this defines APG file serialization. Decode fully before concluding endpoint purposes. |
+| `script_17.js` — `macroEditor.js` | Obfuscated primary macro-editor implementation. Visible symbols include `ButtonType` with `BUTTON`, `STICK`, `TRIGGER`; surrounding code includes macro editor access/count logic. | **Highest priority**: primary candidate for controller control selection, macro step state, import/export and APG serialization. Must be deobfuscated and traced end-to-end. |
+
+### Page-level context
+
+The official `js/index.html` identifies the page as “GuliKit Macro editor” and contains editor-facing controls/text for button selection, adding steps, step delay, blank delay, clearing the list, importing, saving and exporting an APG file. This confirms the page's intended editor functions, but the HTML labels alone do not define the serialized file format or encoded button values.
+
+### Audit status clarification
+
+- The 17 files have now received an initial role classification from source reading.
+- **Full audit completion remains 0/17** under the stricter completion criteria in the audit tracker.
+- This overview must not be interpreted as proof that all 17 files have been exhaustively analyzed or that APG format/mappings have been verified.
+- Next priority: deobfuscate `script_17.js`, trace each UI action through state changes to export/import code, and inspect `script_16.js` only as needed to establish any relationship with editor service calls.

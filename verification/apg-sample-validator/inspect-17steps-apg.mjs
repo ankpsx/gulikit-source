@@ -52,7 +52,7 @@ function expectedState(step, layout) {
       if (dpadCode[b.id]) dpad=dpadCode[b.id];
     }
   }
-  const out=Buffer.alloc(16);
+  const out=Buffer.alloc(15);
   out.writeUInt16BE(axes.lx,0); out.writeUInt16BE(axes.ly,2);
   out.writeUInt16BE(axes.rx,4); out.writeUInt16BE(axes.ry,6);
   out.writeUInt16BE(triggerL,8); out.writeUInt16BE(triggerR,10);
@@ -65,7 +65,7 @@ for (const layout of ["PC","SWITCH"]) {
   for (let si=0;si<steps.length;si++) {
     const step=steps[si], n=Math.ceil(step.delay*79/1000), expected=expectedState(step,layout);
     for(let j=0;j<n;j++) {
-      const actual=bytes.subarray(offset*STRIDE,offset*STRIDE+16);
+      const actual=bytes.subarray(offset*STRIDE,offset*STRIDE+15);
       if (!actual.equals(expected) && mismatches.length<12) mismatches.push({step:si+1,record:offset,expected:expected.toString("hex"),actual:actual.toString("hex")});
       offset++;
     }

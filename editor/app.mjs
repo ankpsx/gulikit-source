@@ -17,9 +17,29 @@ function localizeWarning(message){
     ["APG records do not store original JSON step boundaries or exact millisecond delays. Adjacent identical states are merged into one inferred run, and delayMsRange is the full set of integer delays compatible with its record count.","APG 记录不保存原始 JSON 的步骤边界或精确毫秒延时。相邻且状态相同的记录会合并为一个推断步骤；delayMsRange 表示与该记录数量相匹配的全部整数延时范围。"],
     ["One or more step delays are ambiguous. Editable delay values are inferred; see apgSource.possibleDelayMs before accepting or changing them.","一个或多个步骤的延时存在歧义。可编辑延时为推断值；确认或修改前，请查看 apgSource.possibleDelayMs。"],
     ["ABXY interpretation was unresolved; select PC or SWITCH layout and re-import.","无法确定 ABXY 按键布局；请选择 PC 或 SWITCH 布局后重新导入。"],
-    ["Stick values are approximate inversions of rounded axis values; original UI values may not be recoverable exactly.","摇杆数值是根据取整后的轴值近似反推的，可能无法精确恢复原始界面数值。"]
+    ["Stick values are approximate inversions of rounded axis values; original UI values may not be recoverable exactly.","摇杆数值是根据取整后的轴值近似反推的，可能无法精确恢复原始界面数值。"],
+    ["Runs are inferred from adjacent identical controller-state bytes; separate neighbouring steps with identical states cannot be distinguished.","步骤是根据相邻且控制器状态字节相同的记录推断出来的；无法区分相邻且状态完全相同的独立步骤。"],
+    ["Original delay is not uniquely recoverable in general; delayMsRange is the integer-millisecond range consistent with the official 79-records/second ceiling formula.","通常无法唯一恢复原始延时；delayMsRange 是符合官方每秒 79 条记录上限公式的整数毫秒范围。"],
+    ["Marker/counter bytes are excluded from state comparison; original record bytes remain available in each run.","比较控制器状态时会排除 Marker/Counter 字节；每个步骤仍保留原始记录字节。"],
+    ["At least three complete records are required to infer a stable counter progression.","至少需要三条完整记录，才能推断稳定的 Counter 递增规律。"],
+    ["More than one fill/profile interpretation is plausible.","存在多种可能的填充区/配置解释。"],
+    ["No unique aligned fill suffix with a stable marker and counter progression was found.","未找到唯一且对齐的填充区后缀，也未找到稳定的 Marker 和 Counter 递增规律。"],
+    ["Do not guess from 0xFF or 0x67 alone; supply recordCount manually and preserve the remaining bytes.","不要仅凭 0xFF 或 0x67 猜测记录边界；请手动填写 recordCount，并保留剩余字节。"],
+    ["Boundary is inferred from an aligned uniform 0xFF/0x67 suffix plus a stable marker/counter pattern; it is not a universal APG terminator rule.","记录边界是根据对齐的连续 0xFF/0x67 后缀以及稳定的 Marker/Counter 模式推断的，并非适用于所有 APG 文件的通用结束规则。"],
+    ["A legitimate final record that coincidentally matches the fill pattern cannot be distinguished from padding using this evidence alone. Preserve the original file and allow manual recordCount override.","如果最后一条有效记录恰好与填充模式相同，仅凭这些证据无法将其与填充区区分。请保留原文件，并允许手动指定 recordCount。"],
+    ["File is too short to establish a stable marker/counter pattern.","文件太短，无法建立稳定的 Marker/Counter 模式。"]
   ];
-  return translations.find(([source])=>source===message)?.[1] ?? message;
+  const exact = translations.find(([source])=>source===message)?.[1];
+  if (exact) return exact;
+  const dpad = message.match(/^Record (\\d+): unknown D-pad value (0x[0-9a-f]+)$/i);
+  if (dpad) return `第 ${dpad[1]} 条记录：未知的方向键数值 ${dpad[2]}`;
+  const marker = message.match(/^Record (\\d+): marker is (0x[0-9a-f]+), not sample marker 0x02$/i);
+  if (marker) return `第 ${marker[1]} 条记录：Marker 为 ${marker[2]}，与样本 Marker 0x02 不一致`;
+  const markerChange = message.match(/^Marker changes at record (\\d+); the sample-style constant-marker pattern does not hold\\.$/);
+  if (markerChange) return `Marker 在第 ${markerChange[1]} 条记录发生变化，不符合样本中的固定 Marker 模式。`;
+  const counterChange = message.match(/^Counter progression changes at record (\\d+); automatic boundary is not safe\\.$/);
+  if (counterChange) return `Counter 在第 ${counterChange[1]} 条记录发生变化，自动判断记录边界不安全。`;
+  return message;
 }
 
 function render(){ $("fileName").value=config.fileName;const host=$("steps");host.replaceChildren();if(!config.macroList.length){host.innerHTML='<div class="empty">当前没有步骤。请使用上方按钮添加。</div>';return;}

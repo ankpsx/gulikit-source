@@ -88,6 +88,7 @@
 | 65 | 官方网页实际导入验收 | 用户已实际在 GuliKit 官方网页导入本项目导出的 29 步 JSON，并确认导入验收成功；本轮验收目标为摇杆力度与 D-pad 八方向箭头在官方网页中正确显示。 | 用户实际操作反馈；属于官方网页人工验收，尚未包含控制器硬件执行/回放验证 |
 | 66 | 官方 JSON→APG 通用导出 | 已实现通用导出路径：不论步骤数量，按每步 ceil(delay_ms×79/1000) 生成 18-byte 记录；自动写入 Marker=0x02、Counter=11/+14/16-bit 回绕、1 MiB 容器与 0xFF 尾部，不再要求用户填写元数据或匹配固定步数 profile。网页 JSON 不含 ABXY 配置，界面默认 Switch（与 17/29 步官方配对样本一致），仍保留 PC/Switch 切换；超出 1 MiB 容量时界面显示截断警告。 | 官方源码确认通用序列化规则；17/29 步配对文件字节级比较通过，37 步任意长度浏览器 E2E 通过；CI Run 44938706631：Chromium E2E 7/7、Node tests 60/60 |
 | 67 | 17 步配對樣本 | Official.17steps.json 共 17 步；配对 APG SHA-256=4e00caeb6de9ce6cdb30dd667de6af09a27ff619ec888316d3b3f6dc19049373；有效记录 777 条；尾部 1,034,590 bytes 为 0xFF；与通用 encoder 导出逐字节一致。 | 官方 JSON/APG 配对样本与本地 CI 测试确认；仅作为回归样本，不是固定步数限制 |
+| 68 | APG→JSON 反向导入的有损边界（17 步新样本） | 新上传 `NoOfficial.17steps-02.json` 实际只有 16 步。与 `Official.17steps.json` 对比：同一摇杆轴上的多个/相反方向无法同时存入 APG 单一轴值；多个 D-pad 方向无法同时存入 APG 单一方向码；相邻两个不同 JSON 步骤若最终编码成相同状态，APG 不含步骤边界，解码会合并为一个 run（本样本 2×200ms 合并为 32 条记录，推定 delay=393ms）；2000/3000ms 延时也只能由记录数反推范围，当前解码器选取范围下界 1988/2988ms。 | GitHub `Official.17steps.json` 与 `NoOfficial.17steps-02.json` 逐步语义比较；codec/apg-codec.mjs、codec/apg-to-model.mjs 结构核对；CI 新增反向导入警告测试 |
 
 ## 3. 已确认的摇杆换算规则（重点）
 
@@ -125,7 +126,7 @@
 
 ## 5. 通用 JSON→APG 要求与目前未完成的验收
 
-1. **通用官方 JSON→APG 导出**：第一版通用实现已通过 CI：Chromium E2E 7/7、Node tests 60/60；17/29 步配对 APG 均逐字节一致，37 步任意长度 JSON 的浏览器导出通过。导出不匹配固定步数 profile，不要求手动填写 Marker/Counter/尾部填充；超出 1 MiB 时会提示截断。仍需由用户将新程序生成的任意步数 APG 导入官方网页实测。ABXY 是 JSON 未包含的外部配置，当前默认 Switch，PC 可切换；不能声称程序可从 JSON 自动识别该字段。
+1. **通用官方 JSON→APG 导出**：第一版通用实现已通过 CI：Chromium E2E 7/7、Node tests 60/60；17/29 步配对 APG 均逐字节一致，37 步任意长度 JSON 的浏览器导出通过。用户后续实测确认导入 Official.17steps.json 后可生成正确 APG。导出不匹配固定步数 profile，不要求手动填写 Marker/Counter/尾部填充；超出 1 MiB 时会提示截断。ABXY 是 JSON 未包含的外部配置，当前默认 Switch，PC 可切换；不能声称可从 JSON 自动识别。
 2. **Windows 用户实机验收**：GitHub Windows runner 构建成功不等于用户电脑安装、启动和导入导出成功；仍需用户实际安装验收。
 3. **APG 元数据与尾部通用规则**：官方网页 serializer 源码现已确认 Marker=0x02、Counter 起点 11/每条 +14（16-bit 回绕）、尾部 0xFF；17/29 两组配对样本一致。若未来出现其他网页版本/固件变体，再按新证据扩展，不得覆盖当前已确认规则。
 4. **斜向摇杆**：官方 serializer 当前已审计分支没有明确的斜向合成逻辑；需要官方 UI 导出样本。

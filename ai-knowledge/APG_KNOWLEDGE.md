@@ -5,7 +5,9 @@
 
 ## 1. Purpose and operating rules
 
-This document records only APG format facts and button/action mappings that have been verified from official GuliKit source code or official GuliKit webpages.
+This document is the single canonical technical knowledge base for developing a local, offline Windows application that can both generate GuliKit-compatible APG files and read/parse existing APG files into editable JSON. The product requirements are recorded in Section 14; all implementation must remain evidence-driven and must not promote unverified format assumptions into confirmed behavior.
+
+This document also records APG format facts and button/action mappings, with verification status and evidence provenance, from official GuliKit source code/webpages and clearly distinguished user-supplied sample observations.
 
 For every new finding:
 
@@ -546,3 +548,48 @@ The user uploaded a new APG file and its companion JSON export directly to the r
 - This is direct binary evidence from the user's new uploaded file, checked in the GitHub-hosted runner; it is distinct from the earlier deleted sample. The new SHA-256 differs from the old sample's hash.
 
 **Important limitation:** successful checks establish agreement only for the fields explicitly tested. Do not describe this as a complete byte-for-byte serialization proof for every selected control. The official source-to-field mapping still requires full deobfuscation and a direct check of each selected identifier against its corresponding bit/value.
+
+
+## 14. Final product goal — bidirectional local APG application (user-confirmed, 2026-11-21)
+
+### Product objective
+
+The final deliverable is a **Windows desktop application that works locally and offline**, without depending on the GuliKit website, which supports both directions:
+
+1. **JSON → APG generation:** import an editable macro JSON configuration, allow the user to create/edit/reorder macro actions and their controls/delays, then generate a GuliKit-compatible `.apg` file.
+2. **APG → JSON reading:** open an existing `.apg` file, parse its macro/action records and recognized controls/delays, display the recovered actions in the editor, and export the parsed configuration as editable JSON.
+3. **Bidirectional editing/conversion:** allow a user to read an existing APG, edit the recovered macro, save JSON, and generate a new APG. Also support JSON import followed by APG generation.
+4. **Validation and fidelity:** compare parsed/generated results at the semantic and byte levels where justified by verified format knowledge; report unsupported or ambiguous data rather than silently guessing.
+5. **Unknown-data preservation:** when reading an APG, retain unrecognized bytes, fields, padding, and record data wherever possible. If the user re-exports without changing the corresponding content, preserve it rather than discarding or rewriting it. Unknown data must not be misrepresented as understood.
+6. **Windows delivery:** provide a graphical desktop interface and ultimately package the application as a Windows `.exe`. The application must be usable offline after installation.
+
+### Core interface capabilities
+
+- Open/import APG and JSON files.
+- Display an ordered macro-step list.
+- Edit ordinary actions, selected buttons, stick directions/axes, triggers, action delays, and blank-delay steps, to the extent each capability is confirmed by format/source analysis.
+- Add, remove, duplicate, reorder, and edit actions.
+- Export JSON configuration.
+- Generate/export APG.
+- Show parse warnings, unsupported fields, and validation differences clearly.
+
+### Engineering requirements and acceptance criteria
+
+- Do not implement a one-way APG writer only: APG reading/parsing and JSON export are required first-class features.
+- Do not treat the current single APG/JSON sample as a complete specification. Current sample checks are sample-scoped and do not prove every button bit, stick direction, delay rule, or all APG variants.
+- Trace official editor UI identifiers through internal state and serialization. For APG parsing, establish field boundaries, record counts, padding/fill behavior, and any version/device distinctions from evidence.
+- Build a reusable APG codec layer with separate, testable operations for parsing APG to an intermediate representation/JSON and serializing that representation to APG.
+- Keep parsing loss-aware: preserve raw source bytes and unknown fields so a read/edit/write cycle does not destroy information that the parser cannot yet interpret.
+- Test both directions against user-provided APG + JSON pairs, including semantic comparisons and byte-for-byte comparisons only where exact preservation is expected.
+- Expand automated tests to cover individual buttons, all stick directions, triggers, blank delays, multiple steps, ordering, unusual/unknown records, and malformed/truncated files.
+- Do not package or describe the application as complete until APG reading, APG generation, JSON import/export, and Windows offline operation have all been tested.
+
+### Development priority
+
+1. Continue source and sample analysis until the APG record layout, per-control mappings, delay expansion, and file-size/fill behavior are sufficiently established.
+2. Implement and test the APG parser (APG → intermediate model/JSON), including preservation of unknown data.
+3. Implement and test the APG serializer (JSON/intermediate model → APG), comparing its output with official-editor samples.
+4. Complete the GUI for editing and bidirectional conversion.
+5. Package and test the offline Windows executable.
+
+This section records the user's final product requirement; it is a product specification, **not evidence that the APG format or implementation is already complete**.

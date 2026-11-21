@@ -512,3 +512,37 @@ This establishes the sample-level correspondence:
 - Therefore, in this sample, each 200 ms UI step corresponds to 16 identical 18-byte state records (32 records total for the two steps).
 - 200 ms / 16 = 12.5 ms per record as a mathematical average only. Do not assert this is the controller playback tick or exact record duration until verified from official playback/format documentation.
 - This observation creates a discrepancy with the previously inspected archived `script_17.js` first-pass delay expansion formula, which appeared to produce one record for a 200 ms step. Re-open and re-evaluate the exact delay expression and its input field, and establish whether the archived source snapshot differs from the live export implementation. Do not silently force the sample into the archived formula or change the observed 16+16 record count.
+
+
+### Section 13 follow-up — second user-supplied APG + JSON pair, automated cross-check (2026-11-21)
+
+The user uploaded a new APG file and its companion JSON export directly to the repository, then both files were moved into `verification/apg-sample-validator/`. The earlier sample-specific hash was not reused.
+
+**Exact new APG observations from GitHub Actions (Node.js 22):**
+- File: `verification/apg-sample-validator/Auto.apg`.
+- Size: **1,048,576 bytes (1 MiB)**.
+- SHA-256: `4db8546e0f81620a05c7606888897b4ab46f38823ea809b2c386848c92eaacb2`.
+- The first 576 bytes are 32 records × 18 bytes.
+- The remaining 1,048,000 bytes are uniformly `0xFF`.
+- Every record has `0x02` at relative byte offset 15.
+- The big-endian 16-bit counter begins at 11 and advances by 14, ending at 445.
+- The first 16 records repeat the same 16-byte controller state; the next 16 records repeat another state.
+- The second group's axes decode as four centered `0x0800` values; triggers, both button-mask bytes and D-pad are zero.
+
+**Companion JSON observations:**
+- File: `verification/apg-sample-validator/macro.json`.
+- `macroList` contains exactly two steps.
+- Step 1 is a non-blank action with 200 ms delay and 21 selected button entries.
+- Step 2 is a blank delay with 200 ms delay, no buttons and no stick directions.
+- The normal action JSON includes both `LT` and `RT`; the corresponding APG trigger fields are non-zero.
+- The normal APG state has non-zero button-mask and D-pad fields.
+
+**Automated verification:**
+- GitHub Actions workflow: `.github/workflows/validate-apg-sample.yml`.
+- Validator: `verification/apg-sample-validator/verify-apg.mjs`.
+- Successful run: https://github.com/ankpsx/gulikit-source/actions/runs/44905863216 (run 4, conclusion `success`).
+- Job log reports PASS for file size, JSON step count/types/delays, 16+16 record grouping, repeated state within each group, neutral blank state, LT/RT non-zero trigger correspondence, normal button/D-pad presence, marker, counter progression, and uniform `0xFF` tail.
+- The validator is intentionally sample-scoped. It does not yet decode and verify every individual button bit against all 21 JSON entries, nor establish a universal APG rule or per-record playback duration.
+- This is direct binary evidence from the user's new uploaded file, checked in the GitHub-hosted runner; it is distinct from the earlier deleted sample. The new SHA-256 differs from the old sample's hash.
+
+**Important limitation:** successful checks establish agreement only for the fields explicitly tested. Do not describe this as a complete byte-for-byte serialization proof for every selected control. The official source-to-field mapping still requires full deobfuscation and a direct check of each selected identifier against its corresponding bit/value.

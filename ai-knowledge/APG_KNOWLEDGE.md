@@ -593,3 +593,66 @@ The final deliverable is a **Windows desktop application that works locally and 
 5. Package and test the offline Windows executable.
 
 This section records the user's final product requirement; it is a product specification, **not evidence that the APG format or implementation is already complete**.
+
+
+---
+
+## 15. Current remaining work and execution checklist (user-requested, 2026-11-21)
+
+This section is the current actionable backlog for completing the user-confirmed offline Windows APG bidirectional application. It records work that remains to be done; it must not be read as a claim that these features have already been implemented or verified.
+
+### A. Finish the format investigation
+
+- [ ] Re-fetch and inspect the current official GuliKit editor source, especially `js/script_17.js` (`macroEditor.js`), and trace the complete `generateAPGContent()` path from UI state to every output byte.
+- [ ] Resolve the exact APG output allocation size and initialization/fill behavior. Reconcile the older 1,024-byte interpretation, the 1 MiB sample, and the observed `0xFF` sample tail using the actual source expression and actual binary bytes. Do not leave contradictory interpretations presented as simultaneously current facts.
+- [ ] Decode the exact delay-to-record expansion formula, including normal action delay, blank-delay behavior, boundary values, and rounding/clamping behavior.
+- [ ] Trace all UI control identifiers into the serializer and establish the complete mapping for every button, trigger, D-pad direction, and all eight stick directions. Mark any mapping that cannot be proven as unresolved.
+- [ ] Establish record sequencing, counter behavior/wraparound, header/version/device markers (if any), trailing padding, and whether multiple APG variants exist.
+- [ ] Confirm whether the official web editor has an APG import/parser. Distinguish JSON configuration import from binary APG import; do not describe JSON import as APG import.
+
+### B. Build the APG codec (core functionality)
+
+- [ ] Define a documented intermediate macro model that can represent every confirmed JSON/APG field without losing action order or simultaneous inputs.
+- [ ] Implement APG binary parsing: APG → intermediate model → JSON. Validate file length, record boundaries, markers, counters, and malformed/truncated input.
+- [ ] Implement APG serialization: JSON/intermediate model → APG. Match official output behavior only where supported by source and sample evidence.
+- [ ] Preserve original bytes and unknown fields/records when parsing and re-exporting. If a file cannot be safely interpreted or modified, report the limitation instead of silently discarding or fabricating data.
+- [ ] Keep parser and serializer independent from the GUI so they can be tested automatically and reused by the application.
+
+### C. Expand evidence and automated validation
+
+- [ ] Use the existing sample pair in `verification/apg-sample-validator/Auto.apg` and `macro.json` as a baseline, not as a complete format specification.
+- [ ] Add isolated test fixtures or independently generated samples for each individual button, all eight D-pad directions, all eight stick directions on both sticks, LT/RT, simultaneous controls, normal delays, blank delays, and multiple ordered actions.
+- [ ] Add tests for zero/minimum/maximum/unusual delay values, record counter wraparound, unknown bytes, alternate markers/versions if found, empty files, wrong-size files, and truncated records.
+- [ ] Compare APG → model/JSON → APG semantically for all supported fields. Require byte-for-byte equality only for cases where lossless preservation is the stated expectation.
+- [ ] Make validation output explicit about what passed, what is only sample-specific, and what remains unproven. A passing current sample validator must not be presented as proof of complete APG compatibility.
+
+### D. Build the Windows offline application
+
+- [ ] Create the desktop application shell (Electron is a viable option, but the final framework choice should be based on maintainability and packaging needs).
+- [ ] Implement JSON import, APG import, action-list editing, adding/removing/duplicating/reordering actions, editing simultaneous buttons/stick directions/triggers/delays, and blank-delay actions.
+- [ ] Implement JSON export and APG export using the tested codec layer.
+- [ ] Provide clear parse errors, unsupported-field warnings, validation results, and safeguards against exporting data that would lose unknown information.
+- [ ] Ensure the application works fully offline after installation and does not depend on the official GuliKit website or remote APIs for core conversion.
+
+### E. Package, test, and deliver
+
+- [ ] Build a Windows x64 installer/executable.
+- [ ] Test installation, launch, import, edit, export, and reopen workflows on Windows.
+- [ ] Test that the packaged application works without an internet connection.
+- [ ] Verify generated APG files against the official editor/device behavior where a safe test path is available; do not claim device compatibility solely from internal round-trip tests.
+- [ ] Publish the finished application source/build artifacts and concise user instructions in the existing project repository, without creating another knowledge document.
+
+### Recommended execution order
+
+1. Resolve the official serializer and sample discrepancies.
+2. Complete control mappings and delay semantics with isolated evidence.
+3. Implement the loss-aware APG parser and tests.
+4. Implement the APG serializer and bidirectional round-trip tests.
+5. Build the editing GUI and JSON/APG import/export workflows.
+6. Package the offline Windows application and perform end-to-end verification.
+
+### Completion definition
+
+The project is complete only when a user can independently open an APG file and export its contents to JSON, open/edit JSON and generate an APG file, edit parsed APG actions and export them again without unintended information loss, and run these workflows in the packaged Windows application offline. Any unsupported or unverified APG fields must be disclosed rather than guessed.
+
+**Maintenance rule:** Keep this backlog and all APG project knowledge in this single file, `ai-knowledge/APG_KNOWLEDGE.md`. Do not create a second knowledge file, dated copy, or parallel specification. Update checklist items only when implementation or verification evidence exists, and re-fetch the file after each GitHub update to confirm the change.

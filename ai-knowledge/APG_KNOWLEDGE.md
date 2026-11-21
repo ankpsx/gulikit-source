@@ -725,14 +725,13 @@ CI Artifact 名称：\`GuliKit-APG-Editor-Windows-x64\`，保留 14 天。
 - 容量溢出和 Counter discontinuity 警告。
 - Electron Windows x64 NSIS 构建。
 
-## K2. 最新已核实自动化证据（代码提交 7dd2f90）
+## K2. 最新已核实自动化证据（复现规格文档与 README 更新后的代码树）
 
-- APG codec workflow Run [44940695471](https://github.com/ankpsx/gulikit-source/actions/runs/44940695471)：成功。
-- Node tests：61/61 通过，0 failed。
-- Chromium E2E workflow step：成功。
-- Windows installer Run [44940695474](https://github.com/ankpsx/gulikit-source/actions/runs/44940695474)：成功。
-- Artifact：\`GuliKit-APG-Editor-Windows-x64\`，ID \`14721965696\`，111,388,250 bytes，SHA-256 \`4eb19013d38ecfc0193f9e925cb6a2caccb627ae4aea216feb12f32621f6965e\`，过期时间 2026-12-05 19:25:13 UTC。
-- 上述 CI 是代码提交 7dd2f90 的证据，不是本知识文档后续修改的 CI 结果。
+- APG codec workflow Run [44942886884](https://github.com/ankpsx/gulikit-source/actions/runs/44942886884)：成功，Node tests **61/61 通过**，Chromium E2E **7/7 通过**，0 failed；同时 `node --check editor/app.mjs` 与 `node --check desktop/main.cjs` 成功。
+- Windows installer Run [44942886837](https://github.com/ankpsx/gulikit-source/actions/runs/44942886837)：成功；`npm run dist` 与 artifact 上传成功。
+- 两个 workflow 对应代码树 commit：`8774a5d7e0fe6f84627cc528105204310047aca0`。随后仅更新了审计状态说明文件；没有修改应用源代码。
+- Artifact：`GuliKit-APG-Editor-Windows-x64`，ID `14722920216`，ZIP 111,388,357 bytes，SHA-256 `7c66fb0294721a4c91afd08a51b24afe0beb0b9c17c4d88240c2cfa131ca747f`，过期时间 2026-12-05 19:49:55 UTC。
+- CI 成功只证明自动化测试与 Windows runner 构建成功；不证明用户 Windows 电脑已安装启动，也不证明控制器硬件回放成功。
 
 ## K3. 用户实际反馈（人工验收）
 

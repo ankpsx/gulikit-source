@@ -43,3 +43,18 @@ test("layout is required and user can override inferred delay", () => {
   });
   assert.equal(result.config.macroList[0].delay, 195);
 });
+
+
+test("editable model adapter can opt into automatic record-range detection", () => {
+  const encoded = encodeAPG({
+    fileName: "auto-range",
+    macroList: [{ id: 1, buttons: [button("A")], sticks: [], delay: 200, isBlankDelay: false }],
+  }, { metadata, abxyLayout: "PC", fileSize: 1024, fillByte: 0xff });
+  const result = apgToEditableModel(encoded.data, {
+    abxyLayout: "PC",
+    autoDetectRecordCount: true,
+  });
+  assert.equal(result.source.recordCount, 16);
+  assert.equal(result.source.recordRangeDetection.status, "detected");
+  assert.equal(result.config.macroList.length, 1);
+});

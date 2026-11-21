@@ -128,7 +128,7 @@ test("browser step controls support defaults, independent delay, reorder and bla
   await page.locator(".step").nth(1).locator(".delay").fill("420");
   await page.locator(".step").nth(1).locator(".delay").dispatchEvent("change");
   await page.locator(".step").nth(0).locator(".down").click();
-  assert.match(await page.locator(".step").nth(0).locator(".step-title").textContent(), /空白延時/);
+  assert.match(await page.locator(".step").nth(0).locator(".step-title").textContent(), /空白延时/);
   assert.equal(await page.locator(".step").nth(0).locator(".delay").inputValue(), "420");
   await page.locator(".step").nth(0).locator(".convert-action").click();
   assert.equal(await page.locator(".step").nth(0).locator(".controls").isVisible(), true);
@@ -178,7 +178,7 @@ test("editing one imported APG run preserves the untouched run and relocates the
   const relocatedSuffix = rebuilt.subarray(36 * recordSize);
   const originalSuffixPrefix = Buffer.from(original).subarray(32 * recordSize, 32 * recordSize + relocatedSuffix.length);
   assert.equal(Buffer.compare(relocatedSuffix, originalSuffixPrefix), 0, "retained suffix prefix was not relocated byte-for-byte");
-  assert.match(await page.locator("#status").textContent(), /原始保留 1 步；重新編碼 1 步/);
+  assert.match(await page.locator("#status").textContent(), /原始保留 1 步；重新编码 1 步/);
 });
 
 

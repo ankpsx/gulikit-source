@@ -497,3 +497,18 @@ Re-analysis of the 32 populated 18-byte records in this sample:
 - The 16-bit counter at bytes 16–17 continues monotonically across both groups, increasing by 14 per record.
 - The second group is a neutral-control state in the sample (centered axes 0x0800, zero triggers, zero button masks, neutral D-pad), and is consistent with the user's described blank-delay action. This is a sample-level correspondence, not yet a universal semantic rule.
 - The user's described action sequence and the observed two groups are now linked as provenance. However, do not yet claim that one 200 ms editor step necessarily expands to 16 records: the source-side expansion rule and the precise number/organization of configured actions must be reconciled with the user's UI setup. The observed fact is 16 repeated records in each group.
+
+
+### Section 13 follow-up — user confirms exactly one normal step plus one blank-delay step (2026-11-21)
+
+The user explicitly confirms the editor setup was:
+- Exactly **one** normal macro action: many controls selected simultaneously, delay set to 200 ms.
+- Then exactly **one** blank-delay action, also set to 200 ms.
+- Not 16 separately-added normal actions.
+
+This establishes the sample-level correspondence:
+- The first 16 populated records represent the one user-created simultaneous-button action.
+- The next 16 populated records represent the one user-created blank-delay action.
+- Therefore, in this sample, each 200 ms UI step corresponds to 16 identical 18-byte state records (32 records total for the two steps).
+- 200 ms / 16 = 12.5 ms per record as a mathematical average only. Do not assert this is the controller playback tick or exact record duration until verified from official playback/format documentation.
+- This observation creates a discrepancy with the previously inspected archived `script_17.js` first-pass delay expansion formula, which appeared to produce one record for a 200 ms step. Re-open and re-evaluate the exact delay expression and its input field, and establish whether the archived source snapshot differs from the live export implementation. Do not silently force the sample into the archived formula or change the observed 16+16 record count.

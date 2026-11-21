@@ -59,6 +59,10 @@ test("browser editor imports, edits, exports JSON and encodes APG", async t => {
   const first = page.locator(".step").nth(0);
   await first.locator(".edit-step").click();
   assert.ok(await page.locator("#buttonGrid .key-d-up").evaluate(el => el.getBoundingClientRect().top < document.querySelector("#buttonGrid .key-d-down").getBoundingClientRect().top), "D-pad directions should follow controller positions");
+  const pos = await page.locator("#buttonGrid").evaluate(el => Object.fromEntries(["x","a","b","y","l3","r3"].map(k => { const r=el.querySelector(".key-"+k).getBoundingClientRect(); return [k,{x:r.x+r.width/2,y:r.y+r.height/2}]; })));
+  assert.ok(pos.x.y < pos.b.y && pos.y.x < pos.a.x, "ABXY must follow Switch Pro positions: X top, A right, B bottom, Y left");
+  assert.ok(pos.l3.x < pos.r3.x, "left stick press must be left of right stick press");
+  assert.equal(await page.locator("#stickGrid").count(), 1, "the page must have one shared stick editor");
   await first.locator(".delay").fill("250");
   await first.locator(".delay").dispatchEvent("change");
   await page.locator("#buttonGrid label").filter({ hasText: /^B$/ }).locator("input").check();

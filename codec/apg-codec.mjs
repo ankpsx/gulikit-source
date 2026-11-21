@@ -220,10 +220,10 @@ function readU16BE(bytes, offset) {
 /**
  * Low-level, loss-aware APG record parser.
  *
- * It intentionally requires recordCount. A 1 MiB APG file has no proven
- * universal terminator: the sample tail is 0xFF while the audited source's
- * fill expression resolves to 0x67. Guessing the end of records could eat
- * valid records or discard opaque data.
+ * recordCount is normally explicit. An opt-in autoDetectRecordCount mode uses
+ * a conservative fill-suffix + marker/counter heuristic; ambiguous files are
+ * rejected. A 1 MiB APG file has no proven universal terminator, so guessing
+ * the end of records could eat valid records or discard opaque data.
  *
  * Returns parsed fields plus each exact 18-byte record and the untouched tail.
  * This is not yet a high-level macro-step reconstruction.

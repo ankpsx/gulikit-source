@@ -307,3 +307,63 @@ export function decodeAPGRecords(input, options = {}) {
     fidelity: "record-level; macro steps and original delays are not reconstructed",
   };
 }
+
+
+/**
+ * Group adjacent records with identical controller-state bytes into candidate
+ * action runs. This is intentionally not advertised as exact macro recovery:
+ * identical neighbouring source steps collapse into one run, and record count
+ * maps to a range of possible integer millisecond delays.
+ */
+export function decodeAPGSteps(input, options = {}) {
+  const decoded = decodeAPGRecords(input, options);
+  const runs = [];
+  const sameState = (a, b) => {
+    for (let i = 0; i < 15; i++) if (a[i] !== b[i]) return false;
+    return true;
+  };
+
+  for (const record of decoded.records) {
+    const previous = runs.at(-1);
+    if (previous && sameState(previous.state.raw, record.raw)) {
+      previous.recordsEnd = record.index;
+      previous.recordCount++;
+      previous.records.push(record);
+    } else {
+      runs.push({
+        recordsStart: record.index,
+        recordsEnd: record.index,
+        recordCount: 1,
+        state: record,
+        records: [record],
+      });
+    }
+  }
+
+  for (const run of runs) {
+    // ceil(delayMs * 79 / 1000) === recordCount.
+    // For positive integer millisecond delays this gives an inclusive range.
+    const n = run.recordCount;
+    run.delayMsRange = {
+      min: Math.max(1, Math.floor(((n - 1) * 1000) / APG_RECORDS_PER_SECOND_FACTOR) + 1),
+      max: Math.floor((n * 1000) / APG_RECORDS_PER_SECOND_FACTOR),
+    };
+    run.delayMsExact = run.delayMsRange.min === run.delayMsRange.max
+      ? run.delayMsRange.min
+      : null;
+  }
+
+  return {
+    runs,
+    recordCount: decoded.recordCount,
+    tail: decoded.tail,
+    trailingFragment: decoded.trailingFragment,
+    warnings: [
+      ...decoded.warnings,
+      "Runs are inferred from adjacent identical controller-state bytes; separate neighbouring steps with identical states cannot be distinguished.",
+      "Original delay is not uniquely recoverable in general; delayMsRange is the integer-millisecond range consistent with the official 79-records/second ceiling formula.",
+      "Marker/counter bytes are excluded from state comparison; original record bytes remain available in each run.",
+    ],
+    fidelity: "inferred state runs; not exact original macro-step reconstruction",
+  };
+}

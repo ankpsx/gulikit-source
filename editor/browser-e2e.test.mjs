@@ -219,3 +219,35 @@ test("browser recognizes the official 29-step JSON and exports a byte-identical 
   assert.match(await page.locator("#status").textContent(), /APG 匯出完成/);
   assert.deepEqual(errors, []);
 });
+
+
+test("official 17-step JSON auto-selects its audited profile and exports the exact paired APG", async t => {
+  const { chromium } = await import("playwright");
+  const { server, url } = await startServer();
+  const browser = await chromium.launch({ headless: true });
+  t.after(async () => { await browser.close(); await new Promise(r => server.close(r)); });
+  const officialJson = await readFile(resolve(root, "verification/apg-sample-validator/Official.17steps.json"));
+  const officialApg = await readFile(resolve(root, "verification/apg-sample-validator/Official.17steps.apg"));
+  const page = await browser.newPage({ acceptDownloads: true });
+  const errors = [];
+  page.on("pageerror", error => errors.push(error.message));
+  await page.goto(url);
+  await page.locator("#jsonFile").setInputFiles({
+    name: "Official.17steps.json",
+    mimeType: "application/json",
+    buffer: officialJson,
+  });
+  await page.locator(".step").nth(16).waitFor();
+  assert.equal(await page.locator(".step").count(), 17);
+  assert.equal(await page.locator("#layout").inputValue(), "SWITCH");
+  assert.equal(await page.locator("#marker").inputValue(), "2");
+  assert.equal(await page.locator("#counterStart").inputValue(), "11");
+  assert.equal(await page.locator("#counterStep").inputValue(), "14");
+  assert.match(await page.locator("#sourceInfo").textContent(), /Official\.17steps\.apg paired sample/);
+  const downloadPromise = page.waitForEvent("download");
+  await page.locator("#exportApg").click();
+  const download = await downloadPromise;
+  const exportedApg = await readFile(await download.path());
+  assert.deepEqual(exportedApg, officialApg);
+  assert.deepEqual(errors, []);
+});

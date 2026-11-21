@@ -425,6 +425,7 @@ The exact helper-function identities used for every high-byte/low-byte operation
 - The inspected `js/script_17.js` blob SHA is `60be095e889ef9a248882c2444513c9c74db8dfb`. Its `generateAPGContent()` allocates `new Uint8Array(1024)`, and `exportAPG()` wraps the returned typed array in a Blob. On the inspected code path, the returned payload therefore appears to be 1,024 bytes.
 - This source observation conflicts with the user's confirmed approximately 1 MB browser download. Do not dismiss either observation. The discrepancy remains unexplained and requires checking the complete `js/` directory for another export path, additional script/module behavior, or a distinction between the inspected function and the actual exported payload.
 - The official editor page is https://macro.gulikit.com/?language=2 and states support for KK3, TT, and Elves 2 APG-capable firmware. The repository `js/` directory is the user-confirmed downloaded source snapshot for that editor.
+- Cross-check within the repository confirms the role of `script_17.js`: `js/index.html` loads `./js/macroEditor.js`, while `js/script_list.txt` maps `script_17.js` to `https://macro.gulikit.com/./js/macroEditor.js`. Thus `script_17.js` is the archived/downloaded `macroEditor.js` asset, not an unrelated numbered script. `js/index.html` and `js/script_list.txt` were both fetched from `main` and inspected.
 
 ### Status / next verification
 - UNRESOLVED: why the user-confirmed browser export is approximately 1 MiB while the inspected `script_17.js` serializer allocates 1,024 bytes.

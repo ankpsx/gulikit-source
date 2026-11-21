@@ -1,6 +1,6 @@
 # GuliKit APG Editor
 
-Offline-first editor for GuliKit macro JSON and APG files. The same codec and action model are used by the browser editor and the Windows Electron desktop application.
+Offline-first editor for GuliKit macro JSON and APG files. The user interface is presented in Simplified Chinese (`zh-CN`). The same codec and action model are used by the browser editor and the Windows Electron desktop application.
 
 ## Run the browser editor
 

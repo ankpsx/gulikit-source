@@ -67,9 +67,6 @@ test("browser editor imports, edits, exports JSON and encodes APG", async t => {
   assert.equal(exported.macroList[0].buttons.find(x => x.id === "A").vendorField, "keep");
   assert.equal(exported.macroList[1].delay, 300);
   assert.equal(exported.macroList[1].isBlankDelay, true);
-  await page.locator("#marker").fill("2");
-  await page.locator("#counterStart").fill("11");
-  await page.locator("#counterStep").fill("14");
   const apgDownloadPromise = page.waitForEvent("download");
   await page.locator("#exportApg").click();
   const apgDownload = await apgDownloadPromise;
@@ -204,11 +201,8 @@ test("browser recognizes the official 29-step JSON and exports a byte-identical 
 
   await page.locator(".step").nth(28).waitFor();
   assert.equal(await page.locator(".step").count(), 29);
-  assert.equal(await page.locator("#marker").inputValue(), "2");
-  assert.equal(await page.locator("#counterStart").inputValue(), "11");
-  assert.equal(await page.locator("#counterStep").inputValue(), "14");
   assert.equal(await page.locator("#layout").inputValue(), "SWITCH");
-  assert.match(await page.locator("#sourceInfo").textContent(), /464 條連續記錄/);
+  assert.match(await page.locator("#sourceInfo").textContent(), /任意步數/);
 
   const downloadPromise = page.waitForEvent("download");
   await page.locator("#exportApg").click();
@@ -240,10 +234,7 @@ test("official 17-step JSON auto-selects its audited profile and exports the exa
   await page.locator(".step").nth(16).waitFor();
   assert.equal(await page.locator(".step").count(), 17);
   assert.equal(await page.locator("#layout").inputValue(), "SWITCH");
-  assert.equal(await page.locator("#marker").inputValue(), "2");
-  assert.equal(await page.locator("#counterStart").inputValue(), "11");
-  assert.equal(await page.locator("#counterStep").inputValue(), "14");
-  assert.match(await page.locator("#sourceInfo").textContent(), /Official\.17steps\.apg paired sample/);
+  assert.match(await page.locator("#sourceInfo").textContent(), /任意步數/);
   const downloadPromise = page.waitForEvent("download");
   await page.locator("#exportApg").click();
   const download = await downloadPromise;

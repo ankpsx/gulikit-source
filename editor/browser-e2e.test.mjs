@@ -303,3 +303,33 @@ test("official 17-step JSON auto-selects its audited profile and exports the exa
   assert.deepEqual(exportedApg, officialApg);
   assert.deepEqual(errors, []);
 });
+
+test("unselected action steps show readable button and stick summaries", async t => {
+  const { chromium } = await import("playwright");
+  const { server, url } = await startServer();
+  const browser = await chromium.launch({ headless: true });
+  t.after(async () => { await browser.close(); await new Promise(r => server.close(r)); });
+  const page = await browser.newPage();
+  await page.goto(url);
+  const config = {
+    fileName: "step-summary",
+    version: "1.0",
+    macroList: [
+      { id: "first", buttons: [{ id: "A" }, { id: "B" }, { id: "D_UP" }], sticks: [{ stick: { id: "L_STICK" }, direction: "UP", value: 75 }], delay: 200, isBlankDelay: false },
+      { id: "second", buttons: [{ id: "LB" }, { id: "RT" }], sticks: [], delay: 300, isBlankDelay: false },
+      { id: "blank", buttons: [], sticks: [], delay: 100, isBlankDelay: true }
+    ]
+  };
+  await page.locator("#jsonFile").setInputFiles({
+    name: "step-summary.json", mimeType: "application/json",
+    buffer: Buffer.from(JSON.stringify(config))
+  });
+  const cards=page.locator(".step");
+  await cards.nth(0).waitFor();
+  assert.match(await cards.nth(1).locator(".step-summary").textContent(), /按键：L、ZR/);
+  assert.match(await cards.nth(2).locator(".step-summary").textContent(), /空白延时：无按键或摇杆/);
+  assert.equal(await cards.nth(0).locator(".step-summary").isVisible(), false, "active step uses the shared controller editor instead of a text summary");
+  await cards.nth(1).locator(".step-title").click();
+  assert.equal(await cards.nth(1).locator(".step-summary").isVisible(), false);
+  assert.match(await cards.nth(0).locator(".step-summary").textContent(), /按键：A、B、方向键↑；摇杆：左摇杆上 75%/);
+});

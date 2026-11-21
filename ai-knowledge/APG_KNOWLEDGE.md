@@ -877,3 +877,51 @@ The source's tail-fill arithmetic is `0x16b + (-0x955 * 4) + (0x49d * 8)`, which
 6. Expand the validator to test every byte field and delay/buffer edge case.
 
 This section is an additional source audit only. It does not claim that the local parser, serializer, or Windows GUI has been implemented.
+
+
+## 20. 2026-11-21 follow-up: D-pad values and remaining control-mask cases
+
+A further direct read of the official `generateAPGContent()` switch statements and the `gamepadButtons` descriptor array produced the following findings.
+
+### 20.1 D-pad byte 14 values
+
+The D-pad is encoded as a single direction code at byte offset 14. The eight direction cases evaluate from the source's arithmetic literals to:
+
+| JSON/button ID | Direction | Byte 14 |
+|---|---|---:|
+| `D_UP` | Up | 1 |
+| `D_DOWN` | Down | 5 |
+| `D_LEFT` | Left | 7 |
+| `D_RIGHT` | Right | 3 |
+| `D_UP_LEFT` | Up-left | 8 |
+| `D_UP_RIGHT` | Up-right | 2 |
+| `D_DOWN_LEFT` | Down-left | 6 |
+| `D_DOWN_RIGHT` | Down-right | 4 |
+| no direction | Neutral | 0 |
+
+This is source-derived and agrees with the existing sample-derived observations. D-pad controls are handled in their own switch and are not folded into byte 12 or byte 13.
+
+### 20.2 Additional byte-13 mask bits
+
+The second button-mask switch has five cases in addition to L3/R3. Its three further arithmetic values evaluate to `0x04`, `0x08`, and `0x10`. The source's gamepad descriptor array contains three additional non-D-pad face/system controls before the D-pad entries; the JSON sample also contains START, SELECT, and HOME. However, the obfuscated string identifiers for the three corresponding switch labels have not yet been decoded with sufficient confidence to pair each mask value to a named control. Therefore the values are recorded, but their name-to-bit association remains explicitly unresolved.
+
+### 20.3 Stick-axis baseline and conversion still under audit
+
+All four axis accumulators initialize to decimal 2048, which establishes the neutral center used by this serializer revision. Each selected stick direction replaces one axis accumulator; the final four values are written as big-endian 16-bit quantities at offsets 0-7.
+
+The per-direction arithmetic literals reduce to the following multipliers/offset expressions in the source:
+- Left stick UP and DOWN use separate signed arithmetic expressions applied to the computed magnitude.
+- Left stick LEFT and RIGHT use separate signed arithmetic expressions applied to the same computed magnitude.
+- Right stick uses the corresponding four expressions for its own two axes.
+- The selected stick descriptor's `value` defaults to 0 when absent, and the intermediate magnitude is rounded with `Math.round`.
+
+The exact intermediate conversion order (multiplication/division) and final signed/unsigned interpretation must be decoded from the obfuscation helper before publishing a percentage-to-axis formula. The neutral value 2048 is confirmed; a complete range/clamping/rounding rule is not yet claimed.
+
+### 20.4 Next targeted audit
+
+1. Decode the obfuscated string table/helper so the three byte-13 switch labels can be paired to START, SELECT, and HOME without relying on array ordering.
+2. Resolve the stick magnitude expression and all eight directional formulas, then test values 0, 1, 50, 99, 100 and out-of-range inputs.
+3. Check simultaneous opposite directions and multiple same-stick directions, because the source loops over selected stick descriptors and later assignments may overwrite earlier ones.
+4. Add the complete D-pad table and confirmed second-mask values to the validator after the remaining names are resolved.
+
+No APG parser, serializer, or GUI implementation is claimed by this research update.

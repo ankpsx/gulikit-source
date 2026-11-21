@@ -1,161 +1,126 @@
 #!/usr/bin/env node
 /**
- * Sample-specific validator for the observed Auto.apg browser-export sample.
- *
- * This is a verifier, not an APG parser or generator. It intentionally checks
- * only properties established for this exact sample.
+ * Cross-check the supplied official-editor JSON export against its APG file.
+ * This validator is intentionally scoped to this 2-step, 200 ms sample.
  */
-
 import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
-import { resolve } from "node:path";
 
-const EXPECTED = Object.freeze({
-  fileSize: 1_048_576,
-  sha256: "15b6c5f4d55e50e08e734c9e337f7b739b3d42c612917941373a4b6c66707617",
-  recordSize: 18,
-  recordCount: 32,
-  populatedBytes: 576,
-  groupSize: 16,
-  firstGroupPrefix: "0fff00010fff00010fff0fffff1f0602",
-  secondGroupPrefix: "08000800080008000000000000000002",
-  markerOffset: 15,
-  markerValue: 0x02,
-  counterOffset: 16,
-  counterStart: 11,
-  counterStep: 14,
-  tailByte: 0xff,
-});
+const APG = process.argv[2] ?? "Auto.apg";
+const JSON_PATH = process.argv[3] ?? "macro.json";
+const RECORD_SIZE = 18;
+const RECORDS_PER_STEP = 16;
+const EXPECTED_SIZE = 1024 * 1024;
 
-function hex(buffer) {
-  return Buffer.from(buffer).toString("hex");
+function fail(message) {
+  console.error(`FAIL  ${message}`);
+  process.exitCode = 1;
 }
-
-function sha256(buffer) {
-  return createHash("sha256").update(buffer).digest("hex");
+function pass(message, detail = "") {
+  console.log(`PASS  ${message}${detail ? ` — ${detail}` : ""}`);
+}
+function same(a, b) {
+  return a.length === b.length && a.every((v, i) => v === b[i]);
 }
 
 async function main() {
-  const inputPath = process.argv[2];
+  const [data, jsonText] = await Promise.all([
+    readFile(APG),
+    readFile(JSON_PATH, "utf8"),
+  ]);
+  const config = JSON.parse(jsonText);
+  const steps = config.macroList;
 
-  if (!inputPath || inputPath === "--help" || inputPath === "-h") {
-    console.log("Usage: node verify-apg.mjs <path-to-Auto.apg>");
-    process.exitCode = inputPath ? 0 : 2;
+  const hash = createHash("sha256").update(data).digest("hex");
+  console.log(`APG: ${APG}`);
+  console.log(`JSON: ${JSON_PATH}`);
+  console.log(`Size: ${data.length} bytes`);
+  console.log(`SHA-256: ${hash}`);
+
+  if (data.length === EXPECTED_SIZE) pass("APG file is 1 MiB");
+  else fail(`APG size is ${data.length}; expected ${EXPECTED_SIZE}`);
+
+  if (Array.isArray(steps) && steps.length === 2) pass("JSON contains exactly two macro steps");
+  else {
+    fail("JSON must contain exactly two macro steps for this sample");
     return;
   }
 
-  return readFile(resolve(inputPath)).then((data) => {
-    const failures = [];
-    const checks = [];
+  const [normal, blank] = steps;
+  if (normal.isBlankDelay === false && normal.delay === 200 && Array.isArray(normal.buttons) && normal.buttons.length > 0) {
+    pass("Step 1 is a normal 200 ms action", `${normal.buttons.length} selected button entries`);
+  } else fail("Step 1 JSON does not match the expected normal 200 ms action");
 
-    function check(name, condition, detail = "") {
-      checks.push({ name, passed: Boolean(condition), detail });
-      if (!condition) failures.push(name);
-    }
+  if (blank.isBlankDelay === true && blank.delay === 200 && blank.buttons?.length === 0 && blank.sticks?.length === 0) {
+    pass("Step 2 is a blank 200 ms delay");
+  } else fail("Step 2 JSON does not match the expected blank 200 ms delay");
 
-    check(
-      "File size is exactly 1 MiB",
-      data.length === EXPECTED.fileSize,
-      `actual=${data.length}, expected=${EXPECTED.fileSize}`,
-    );
+  const expectedRecords = steps.reduce((sum, step) => sum + (step.delay === 200 ? RECORDS_PER_STEP : 0), 0);
+  const prefixBytes = expectedRecords * RECORD_SIZE;
+  if (expectedRecords === 32 && data.length >= prefixBytes) {
+    pass("JSON delays imply 32 records for this sample", `${RECORDS_PER_STEP} records per 200 ms step`);
+  } else {
+    fail(`Expected 32 records / 576-byte record area; calculated ${expectedRecords} records`);
+    return;
+  }
 
-    const actualHash = sha256(data);
-    check(
-      "SHA-256 matches the supplied Auto.apg sample",
-      actualHash === EXPECTED.sha256,
-      `actual=${actualHash}`,
-    );
+  const records = [];
+  for (let i = 0; i < expectedRecords; i++) {
+    const start = i * RECORD_SIZE;
+    records.push(data.subarray(start, start + RECORD_SIZE));
+  }
 
-    check(
-      "Populated prefix contains exactly 32 complete 18-byte records",
-      EXPECTED.recordCount * EXPECTED.recordSize === EXPECTED.populatedBytes &&
-        data.length >= EXPECTED.populatedBytes,
-      `records=${EXPECTED.recordCount}, stride=${EXPECTED.recordSize}, prefix=${EXPECTED.populatedBytes}`,
-    );
+  const normalState = records[0].subarray(0, 16);
+  const blankState = records[RECORDS_PER_STEP].subarray(0, 16);
+  const normalRepeated = records.slice(0, RECORDS_PER_STEP).every(r => same(r.subarray(0, 16), normalState));
+  const blankRepeated = records.slice(RECORDS_PER_STEP).every(r => same(r.subarray(0, 16), blankState));
 
-    if (data.length >= EXPECTED.populatedBytes) {
-      let firstGroupMatches = true;
-      let secondGroupMatches = true;
-      let markerMatches = true;
-      let counterSequenceMatches = true;
-      const observedCounters = [];
+  if (normalRepeated) pass("All 16 records for normal action repeat the same controller state");
+  else fail("Normal-action records do not repeat one controller state");
 
-      for (let index = 0; index < EXPECTED.recordCount; index += 1) {
-        const offset = index * EXPECTED.recordSize;
-        const record = data.subarray(offset, offset + EXPECTED.recordSize);
-        const prefix = hex(record.subarray(0, 16));
-        const expectedPrefix =
-          index < EXPECTED.groupSize
-            ? EXPECTED.firstGroupPrefix
-            : EXPECTED.secondGroupPrefix;
+  if (blankRepeated) pass("All 16 records for blank delay repeat the same neutral state");
+  else fail("Blank-delay records do not repeat one neutral state");
 
-        if (prefix !== expectedPrefix) {
-          if (index < EXPECTED.groupSize) firstGroupMatches = false;
-          else secondGroupMatches = false;
-        }
+  const axesNeutral = [0, 2, 4, 6].every(o => blankState.readUInt16BE(o) === 0x0800);
+  const triggersNeutral = blankState.readUInt16BE(8) === 0 && blankState.readUInt16BE(10) === 0;
+  const buttonsNeutral = blankState.readUInt16BE(12) === 0 && blankState[14] === 0;
+  if (axesNeutral && triggersNeutral && buttonsNeutral) pass("Blank-delay APG state is neutral (axes centered; triggers/buttons/d-pad released)");
+  else fail("Blank-delay APG state is not fully neutral");
 
-        if (record[EXPECTED.markerOffset] !== EXPECTED.markerValue) {
-          markerMatches = false;
-        }
+  const selectedIds = normal.buttons.map(b => b.id);
+  const hasTriggerSelection = selectedIds.includes("LT") && selectedIds.includes("RT");
+  const triggerValuesPresent = normalState.readUInt16BE(8) !== 0 && normalState.readUInt16BE(10) !== 0;
+  if (hasTriggerSelection && triggerValuesPresent) pass("JSON LT/RT selections correspond to non-zero APG trigger fields");
+  else fail("JSON LT/RT selections do not correspond to non-zero APG trigger fields");
 
-        const counter = record.readUInt16BE(EXPECTED.counterOffset);
-        observedCounters.push(counter);
-        const expectedCounter =
-          EXPECTED.counterStart + index * EXPECTED.counterStep;
-        if (counter !== expectedCounter) counterSequenceMatches = false;
-      }
+  const hasButtonMask = normalState.readUInt16BE(12) !== 0;
+  const hasDpadMask = normalState[14] !== 0;
+  if (hasButtonMask && hasDpadMask) pass("Normal-action APG contains button and d-pad state");
+  else fail("Normal-action APG is missing button or d-pad state");
 
-      check(
-        "Records 1–16 match the simultaneous-button state prefix",
-        firstGroupMatches,
-        `expected prefix=${EXPECTED.firstGroupPrefix}`,
-      );
-      check(
-        "Records 17–32 match the blank-delay state prefix",
-        secondGroupMatches,
-        `expected prefix=${EXPECTED.secondGroupPrefix}`,
-      );
-      check(
-        "All 32 records contain marker 0x02 at relative offset 15",
-        markerMatches,
-      );
-      check(
-        "Big-endian counter starts at 11 and increases by 14 per record",
-        counterSequenceMatches,
-        `first=${observedCounters[0]}, last=${observedCounters.at(-1)}`,
-      );
-    } else {
-      check("Record-content checks skipped", false, "file is shorter than 576 bytes");
-    }
+  let markersOk = true;
+  let countersOk = true;
+  const firstCounter = records[0].readUInt16BE(16);
+  for (let i = 0; i < records.length; i++) {
+    if (records[i][15] !== 0x02) markersOk = false;
+    if (records[i].readUInt16BE(16) !== firstCounter + i * 14) countersOk = false;
+  }
+  if (markersOk) pass("All records contain marker 0x02 at byte offset 15");
+  else fail("One or more records have an unexpected marker");
+  if (countersOk) pass("16-bit big-endian counter advances by 14 per record", `first=${firstCounter}, last=${records.at(-1).readUInt16BE(16)}`);
+  else fail("Record counter sequence is inconsistent");
 
-    const tailIsExpected =
-      data.length >= EXPECTED.populatedBytes &&
-      data.subarray(EXPECTED.populatedBytes).every(
-        (byte) => byte === EXPECTED.tailByte,
-      );
-    check(
-      "All bytes from offset 576 to EOF are 0xFF",
-      tailIsExpected,
-      `tail length=${Math.max(0, data.length - EXPECTED.populatedBytes)}`,
-    );
+  const tail = data.subarray(prefixBytes);
+  const tailUniform = tail.length > 0 && tail.every(b => b === tail[0]);
+  if (tailUniform) pass("Unused APG area is uniformly padded", `byte=0x${tail[0].toString(16).padStart(2, "0")}, length=${tail.length}`);
+  else fail("Unused APG area is not uniformly padded");
 
-    for (const item of checks) {
-      console.log(`${item.passed ? "PASS" : "FAIL"}  ${item.name}`);
-      if (item.detail) console.log(`      ${item.detail}`);
-    }
-
-    console.log("");
-    console.log(
-      failures.length === 0
-        ? "RESULT: PASS — file matches the recorded Auto.apg sample."
-        : `RESULT: FAIL — ${failures.length} check(s) failed.`,
-    );
-
-    if (failures.length > 0) process.exitCode = 1;
-  });
+  console.log("");
+  if (process.exitCode) console.log("RESULT: FAIL — APG and JSON cross-check did not pass.");
+  else console.log("RESULT: PASS — APG structure and the two JSON actions agree on the tested fields.");
 }
 
-main().catch((error) => {
+main().catch(error => {
   console.error(`ERROR: ${error.message}`);
   process.exitCode = 1;
 });

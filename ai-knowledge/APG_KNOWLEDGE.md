@@ -86,6 +86,7 @@
 | 63 | 设备连接/写入 | 当前程序不支持通过 USB 或 Bluetooth 将宏写入控制器。 | 当前产品范围 |
 | 64 | 最新 CI 与 Windows 构建 | 提交 `759d1d98500f2e07132d863198845af3461d03c3` 的 APG codec workflow 通过：Chromium E2E 5/5、Node tests 58/58；Windows x64 NSIS 构建成功并上传 Artifact `GuliKit-APG-Editor-Windows-x64`，Artifact ID `14719135987`，ZIP 大小 111,387,602 bytes，SHA-256 `b308373170a07f4b58e247717bafab687664b9e3eb4e67095237a38cbdc0644f`，有效期至 2026-12-05 18:14:51 UTC。 | Run [44934334389](https://github.com/ankpsx/gulikit-source/actions/runs/44934334389)；Windows 构建 Run [44934334346](https://github.com/ankpsx/gulikit-source/actions/runs/44934334346)。runner 构建成功不等于用户电脑实机安装验收 |
 | 65 | 官方网页实际导入验收 | 用户已实际在 GuliKit 官方网页导入本项目导出的 29 步 JSON，并确认导入验收成功；本轮验收目标为摇杆力度与 D-pad 八方向箭头在官方网页中正确显示。 | 用户实际操作反馈；属于官方网页人工验收，尚未包含控制器硬件执行/回放验证 |
+| 66 | 官方 JSON→APG 通用导出要求 | 无论官方 JSON 的步骤数量（例如 5、17、29 或其他数量），程序都必须自动适配并生成对应 APG；不得依赖固定步数 profile，不得要求用户手动填写 Marker、Counter、ABXY 布局或尾部填充。 | 用户明确提出的产品需求；尚待通用实现与多步数官方网页字节级验收 |
 
 ## 3. 已确认的摇杆换算规则（重点）
 
@@ -125,9 +126,9 @@
 
 1. **Windows 用户实机验收**：GitHub Windows runner 构建成功不等于用户电脑安装、启动和导入导出成功；仍需用户实际安装验收。
 2. **其他 APG 文件 profile**：29 步样本的 marker/counter/tail 规则不能推广到所有固件、所有 APG 文件。
-3. **斜向摇杆**：官方 serializer 当前已审计分支没有明确的斜向合成逻辑；需要官方 UI 导出样本。
-4. **损坏/未知格式文件**：需继续验证未知 marker、未知 D-pad、截断文件、非对齐尾部、Counter 中断等情况的警告和保留策略。
-5. **USB/Bluetooth 写入**：当前不支持，不得在界面或说明中暗示已支持。
+4. **斜向摇杆**：官方 serializer 当前已审计分支没有明确的斜向合成逻辑；需要官方 UI 导出样本。
+5. **损坏/未知格式文件**：需继续验证未知 marker、未知 D-pad、截断文件、非对齐尾部、Counter 中断等情况的警告和保留策略。
+6. **USB/Bluetooth 写入**：当前不支持，不得在界面或说明中暗示已支持。
 
 ## 6. 项目文件索引
 
